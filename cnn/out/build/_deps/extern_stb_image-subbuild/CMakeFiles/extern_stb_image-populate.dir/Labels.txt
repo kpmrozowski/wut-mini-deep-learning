@@ -1,0 +1,15 @@
+# Target labels
+ extern_stb_image-populate
+# Source files and their labels
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/CMakeFiles/extern_stb_image-populate
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/CMakeFiles/extern_stb_image-populate.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/CMakeFiles/extern_stb_image-populate-complete.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-install.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-mkdir.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-download.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-update.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-patch.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-configure.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-build.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-test.rule
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-copyfile.rule

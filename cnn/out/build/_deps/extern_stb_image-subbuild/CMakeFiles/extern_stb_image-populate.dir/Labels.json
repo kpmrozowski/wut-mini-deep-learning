@@ -1,0 +1,49 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/CMakeFiles/extern_stb_image-populate"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/CMakeFiles/extern_stb_image-populate.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/CMakeFiles/extern_stb_image-populate-complete.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-install.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-mkdir.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-download.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-update.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-patch.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-configure.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-build.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-test.rule"
+		},
+		{
+			"file" : "/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image-subbuild/extern_stb_image-populate-prefix/src/extern_stb_image-populate-stamp/extern_stb_image-populate-copyfile.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"extern_stb_image-populate"
+		],
+		"name" : "extern_stb_image-populate"
+	}
+}

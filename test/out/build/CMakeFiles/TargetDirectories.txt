@@ -1,0 +1,3 @@
+/workspace/wut-mini-deep-learning/test/out/build/CMakeFiles/rebuild_cache.dir
+/workspace/wut-mini-deep-learning/test/out/build/CMakeFiles/edit_cache.dir
+/workspace/wut-mini-deep-learning/test/out/build/CMakeFiles/example-app.dir

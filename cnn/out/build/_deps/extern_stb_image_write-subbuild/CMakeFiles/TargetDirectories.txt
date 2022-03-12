@@ -1,0 +1,3 @@
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image_write-subbuild/CMakeFiles/rebuild_cache.dir
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image_write-subbuild/CMakeFiles/edit_cache.dir
+/workspace/wut-mini-deep-learning/cnn/out/build/_deps/extern_stb_image_write-subbuild/CMakeFiles/extern_stb_image_write-populate.dir

@@ -22,7 +22,7 @@ int main() {
     const double learning_rate = 1e-3;
     const double weight_decay = 1e-3;
 
-    const std::string imagenette_data_path = "../../../../data/imagenette2-160";
+    const std::string imagenette_data_path = "../../../../cifar-10";
 
     // Imagenette dataset
     auto train_dataset = ImageFolderDataset(imagenette_data_path, ImageFolderDataset::Mode::TRAIN, {160, 160})

@@ -1,0 +1,3 @@
+repository='external project URL'
+module='https://raw.githubusercontent.com/nothings/stb/master/stb_image_write.h'
+tag=''
