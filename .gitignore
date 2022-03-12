@@ -1,3 +1,5 @@
+test/out
+cnn/out
 # Prerequisites
 *.d
 
