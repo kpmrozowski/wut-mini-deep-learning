@@ -17,11 +17,14 @@ int main(int argc, char **argv) {
 
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 8;
+    const int64_t batch_size = 32;
     const size_t num_epochs = 10;
     const double learning_rate = 1e-3;
     const double weight_decay = 1e-3;
-
+    const uint64_t seed_cuda = 123;
+    
+    torch::cuda::manual_seed(seed_cuda);
+    torch::cuda::manual_seed_all(seed_cuda);
     const std::string imagenette_data_path = argc >= 2 ? argv[1] : "../../../../cifar-10";
 
     // Imagenette dataset

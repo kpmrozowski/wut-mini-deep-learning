@@ -1,5 +1,6 @@
 test/out
 cnn/out
+compile_commands.json
 # Prerequisites
 *.d
 
