@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
 
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 32;
-    const size_t num_epochs = 10;
+    const int64_t batch_size = 16;
+    const size_t num_epochs = 30;
     const double learning_rate = 1e-3;
     const double weight_decay = 1e-3;
     const uint64_t seed_cuda = 123;
