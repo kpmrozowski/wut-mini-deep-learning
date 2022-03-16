@@ -62,8 +62,13 @@ int main(int argc, char **argv) {
 
     std::cout << "Training...\n";
 
+    size_t best_correct = 0;
+
     // Train the model
     for (size_t epoch = 0; epoch != num_epochs; ++epoch) {
+        // Train the model
+        model->train();
+
         // Initialize running metrics
         double running_loss = 0.0;
         size_t num_correct = 0;
@@ -98,36 +103,41 @@ int main(int argc, char **argv) {
         auto accuracy = static_cast<double>(num_correct) / num_train_samples;
 
         std::cout << "Epoch [" << (epoch + 1) << "/" << num_epochs << "], Trainset - Loss: "
-            << sample_mean_loss << ", Accuracy: " << accuracy << '\n';
+            << sample_mean_loss << ", Accuracy: " << accuracy;
+
+        // Test the model
+        model->eval();
+        torch::InferenceMode no_grad;
+
+        running_loss = 0.0;
+        num_correct = 0;
+
+        for (const auto& batch : *test_loader) {
+            auto data = batch.data.to(device);
+            auto target = batch.target.to(device);
+
+            auto output = model->forward(data);
+
+            auto loss = torch::nn::functional::cross_entropy(output, target);
+            running_loss += loss.item<double>() * data.size(0);
+
+            auto prediction = output.argmax(1);
+            num_correct += prediction.eq(target).sum().item<int64_t>();
+        }
+
+        auto test_sample_mean_loss = running_loss / num_test_samples;
+        auto test_accuracy = static_cast<double>(num_correct) / num_test_samples;
+
+        std::cout << ", Testset - Loss: " << test_sample_mean_loss << ", Accuracy: " << test_accuracy << '\n';
+
+        if (num_correct > best_correct) {
+            best_correct = num_correct;
+            std::cout << "Best epoch so far! Saving to file...\n";
+            torch::serialize::OutputArchive archive;
+            model->save(archive);
+            archive.save_to("best_model");
+        }
     }
 
     std::cout << "Training finished!\n\n";
-    std::cout << "Testing...\n";
-
-    // Test the model
-    model->eval();
-    torch::InferenceMode no_grad;
-
-    double running_loss = 0.0;
-    size_t num_correct = 0;
-
-    for (const auto& batch : *test_loader) {
-        auto data = batch.data.to(device);
-        auto target = batch.target.to(device);
-
-        auto output = model->forward(data);
-
-        auto loss = torch::nn::functional::cross_entropy(output, target);
-        running_loss += loss.item<double>() * data.size(0);
-
-        auto prediction = output.argmax(1);
-        num_correct += prediction.eq(target).sum().item<int64_t>();
-    }
-
-    std::cout << "Testing finished!\n";
-
-    auto test_accuracy = static_cast<double>(num_correct) / num_test_samples;
-    auto test_sample_mean_loss = running_loss / num_test_samples;
-
-    std::cout << "Testset - Loss: " << test_sample_mean_loss << ", Accuracy: " << test_accuracy << '\n';
 }
