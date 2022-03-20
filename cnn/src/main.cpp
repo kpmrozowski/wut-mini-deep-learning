@@ -49,8 +49,43 @@ int main(int argc, char **argv) {
     auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
         std::move(test_dataset), batch_size);
 
+    double best_loss = std::numeric_limits<double>::max();
+
     // Model
     ConvNet model(num_classes);
+    if (argc >= 3) {
+        torch::serialize::InputArchive archive;
+        archive.load_from(argv[2]);
+        model->load(archive);
+
+        std::cout << "Initial test...\n";
+
+        model->eval();
+        torch::InferenceMode no_grad;
+
+        double running_loss = 0.0;
+        size_t num_correct = 0;
+
+        for (const auto& batch : *test_loader) {
+            auto data = batch.data.to(device);
+            auto target = batch.target.to(device);
+
+            auto output = model->forward(data);
+
+            auto loss = torch::nn::functional::cross_entropy(output, target);
+            running_loss += loss.item<double>() * data.size(0);
+
+            auto prediction = output.argmax(1);
+            num_correct += prediction.eq(target).sum().item<int64_t>();
+        }
+
+        auto test_sample_mean_loss = running_loss / num_test_samples;
+        auto test_accuracy = static_cast<double>(num_correct) / num_test_samples;
+
+        std::cout << "Loss: " << test_sample_mean_loss << ", Accuracy: " << test_accuracy << '\n';
+
+        best_loss = test_sample_mean_loss;
+    }
     model->to(device);
 
     // Optimizer
@@ -61,8 +96,6 @@ int main(int argc, char **argv) {
     std::cout << std::fixed << std::setprecision(4);
 
     std::cout << "Training...\n";
-
-    size_t best_correct = 0;
 
     // Train the model
     for (size_t epoch = 0; epoch != num_epochs; ++epoch) {
@@ -130,8 +163,8 @@ int main(int argc, char **argv) {
 
         std::cout << ", Testset - Loss: " << test_sample_mean_loss << ", Accuracy: " << test_accuracy << '\n';
 
-        if (num_correct > best_correct) {
-            best_correct = num_correct;
+        if (test_sample_mean_loss < best_loss) {
+            best_loss = test_sample_mean_loss;
             std::cout << "Best epoch so far! Saving to file...\n";
             torch::serialize::OutputArchive archive;
             model->save(archive);
