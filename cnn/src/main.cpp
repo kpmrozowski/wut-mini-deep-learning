@@ -28,6 +28,12 @@ int main(int argc, char **argv) {
     const double learning_rate = 1e-3;
     const double weight_decay = 1e-3;
     const uint64_t seed_cuda = 123;
+    const enum class regularization_type {
+        none,
+        l1,
+        l2,
+    } regularization_type = regularization_type::l1;
+    const double regularization_lambda = 1e-4;
     
     torch::cuda::manual_seed(seed_cuda);
     torch::cuda::manual_seed_all(seed_cuda);
@@ -141,6 +147,13 @@ int main(int argc, char **argv) {
 
             // Update number of correctly classified samples
             num_correct += prediction.eq(target).sum().item<int64_t>();
+
+            // Regularize
+            if (regularization_type != regularization_type::none) {
+                for (const auto &param : model->parameters()) {
+                    loss += regularization_lambda * (regularization_type == regularization_type::l1 ? param.abs() : param.pow(2)).sum();
+                }
+            }
 
             // Backward pass and optimize
             optimizer.zero_grad();
