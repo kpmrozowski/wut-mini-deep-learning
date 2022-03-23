@@ -4,6 +4,9 @@
 #include <iomanip>
 #include "convnet.h"
 #include "imagefolder_dataset.h"
+#include <Util/CSVLogger.h>
+#include <Util/Time.h>
+#include <Eden_resources/Ngpus_Ncpus.h>
 
 using dataset::ImageFolderDataset;
 
@@ -14,11 +17,14 @@ int main(int argc, char **argv) {
     auto cuda_available = torch::cuda::is_available();
     torch::Device device(cuda_available ? torch::kCUDA : torch::kCPU);
     std::cout << (cuda_available ? "CUDA available. Training on GPU." : "Training on CPU.") << '\n';
+    unsigned num_gpus = Eden_resources::get_gpus_count();
+    unsigned gpu_idx = 7;
+    if (cuda_available) device.set_index(gpu_idx < num_gpus ? gpu_idx : num_gpus - 1);
 
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 16;
-    const size_t num_epochs = 30;
+    const int64_t batch_size = 64;
+    const size_t num_epochs = 1000;
     const double learning_rate = 1e-3;
     const double weight_decay = 1e-3;
     const uint64_t seed_cuda = 123;
@@ -79,13 +85,23 @@ int main(int argc, char **argv) {
             num_correct += prediction.eq(target).sum().item<int64_t>();
         }
 
-        auto test_sample_mean_loss = running_loss / num_test_samples;
-        auto test_accuracy = static_cast<double>(num_correct) / num_test_samples;
+        auto test_mean_loss = running_loss / num_test_samples;
+        auto test_train_accuracy = static_cast<double>(num_correct) / num_test_samples;
 
-        std::cout << "Loss: " << test_sample_mean_loss << ", Accuracy: " << test_accuracy << '\n';
+        std::cout << "Loss: " << test_mean_loss << ", train_accuracy: " << test_train_accuracy << '\n';
 
-        best_loss = test_sample_mean_loss;
+        best_loss = test_mean_loss;
     }
+    
+    std::string_view logs_path = "logs/cnn1.csv";
+    if (argc >= 4) {
+        logs_path = argv[3];
+    }
+
+    util::CSVLogger g_logger("logmy", 
+        (std::string{"Epoch_of_"} + std::to_string(num_epochs)).c_str(),
+        "train_loss", "train_train_accuracy", 
+        "test_loss", "test_train_accuracy");
     model->to(device);
 
     // Optimizer
@@ -95,7 +111,7 @@ int main(int argc, char **argv) {
     // Set floating point output precision
     std::cout << std::fixed << std::setprecision(4);
 
-    std::cout << "Training...\n";
+    std::cout << "Training....\n";
 
     // Train the model
     for (size_t epoch = 0; epoch != num_epochs; ++epoch) {
@@ -132,11 +148,11 @@ int main(int argc, char **argv) {
             optimizer.step();
         }
 
-        auto sample_mean_loss = running_loss / num_train_samples;
-        auto accuracy = static_cast<double>(num_correct) / num_train_samples;
+        auto train_mean_loss = running_loss / num_train_samples;
+        auto train_accuracy = static_cast<double>(num_correct) / num_train_samples;
 
         std::cout << "Epoch [" << (epoch + 1) << "/" << num_epochs << "], Trainset - Loss: "
-            << sample_mean_loss << ", Accuracy: " << accuracy;
+            << train_mean_loss << ", train_accuracy: " << train_accuracy;
 
         // Test the model
         model->eval();
@@ -158,14 +174,15 @@ int main(int argc, char **argv) {
             num_correct += prediction.eq(target).sum().item<int64_t>();
         }
 
-        auto test_sample_mean_loss = running_loss / num_test_samples;
+        auto test_mean_loss = running_loss / num_test_samples;
         auto test_accuracy = static_cast<double>(num_correct) / num_test_samples;
 
-        std::cout << ", Testset - Loss: " << test_sample_mean_loss << ", Accuracy: " << test_accuracy << '\n';
+        std::cout << ", Testset - Loss: " << test_mean_loss << ", train_accuracy: " << test_accuracy << '\n';
+        g_logger.log(epoch, train_mean_loss, train_accuracy, test_mean_loss, test_accuracy);
 
-        if (test_sample_mean_loss < best_loss) {
-            best_loss = test_sample_mean_loss;
-            std::cout << "Best epoch so far! Saving to file...\n";
+        if (test_mean_loss < best_loss) {
+            best_loss = test_mean_loss;
+            std::cout << "Epoch " << epoch << " is the best so far! Saving to file...\n";
             torch::serialize::OutputArchive archive;
             model->save(archive);
             archive.save_to("best_model");

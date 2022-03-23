@@ -15,40 +15,36 @@ class ConvNetImpl : public torch::nn::Module {
  private:
     torch::nn::Sequential layer01{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(3, 16, 3).stride(1)),
-        torch::nn::Dropout2d(0.2),
         torch::nn::BatchNorm2d(16),
-        torch::nn::Sigmoid(),
+        torch::nn::ReLU(),
         torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
     };
 
     torch::nn::Sequential layer02{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(16, 32, 3).stride(1)),
-        torch::nn::Dropout2d(0.2),
         torch::nn::BatchNorm2d(32),
-        torch::nn::Sigmoid(),
+        torch::nn::ReLU(),
         torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
     };
 
     torch::nn::Sequential layer03{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(32, 64, 3).stride(1)),
-        torch::nn::Dropout2d(0.2),
         torch::nn::BatchNorm2d(64),
-        torch::nn::Sigmoid(),
+        torch::nn::ReLU(),
         torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
     };
 
     torch::nn::Sequential layer04{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 128, 3).stride(1)),
-        torch::nn::Dropout2d(0.2),
         torch::nn::BatchNorm2d(128),
-        torch::nn::Sigmoid(),
+        torch::nn::ReLU(),
         torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
     };
 
     torch::nn::Sequential layer05{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 256, 3).stride(1)),
         torch::nn::BatchNorm2d(256),
-        torch::nn::Sigmoid()
+        torch::nn::ReLU(),
     };
 
    //  torch::nn::Sequential layer06{
@@ -252,8 +248,9 @@ TORCH_MODULE(ConvNet);
 // Testset - Loss: 6.8402, Accuracy: 0.2168
 
 
+
 // ########################################################################
-// ################################ RUN 3 #################################
+// ############ VERSION v1.0.0 RUN 1 accuracy 55% #########################
 // ########################################################################
 
 
@@ -331,3 +328,67 @@ TORCH_MODULE(ConvNet);
 // Testing...
 // Testing finished!
 // Testset - Loss: 1.7731, Accuracy: 0.4520
+
+
+// ########################################################################
+// ############ VERSION v1.0.0 RUN 2 accuracy 61% #########################
+// ########################################################################
+
+// CUDA available. Training on GPU.
+// Training....
+// Epoch [1/1000], Trainset - Loss: 1.9484, Accuracy: 0.3036, Testset - Loss: 1.7661, Accuracy: 0.3764
+// Best epoch so far! Saving to file...
+// Epoch [2/1000], Trainset - Loss: 1.7720, Accuracy: 0.3676, Testset - Loss: 1.5826, Accuracy: 0.4240
+// Best epoch so far! Saving to file...
+// Epoch [3/1000], Trainset - Loss: 1.6598, Accuracy: 0.4065, Testset - Loss: 1.5585, Accuracy: 0.4458
+// Best epoch so far! Saving to file...
+// Epoch [4/1000], Trainset - Loss: 1.5424, Accuracy: 0.4517, Testset - Loss: 1.6371, Accuracy: 0.4062
+// Epoch [5/1000], Trainset - Loss: 1.4508, Accuracy: 0.4896, Testset - Loss: 1.6057, Accuracy: 0.4298
+// Epoch [6/1000], Trainset - Loss: 1.4070, Accuracy: 0.5064, Testset - Loss: 1.4506, Accuracy: 0.4726
+// Best epoch so far! Saving to file...
+// Epoch [7/1000], Trainset - Loss: 1.3842, Accuracy: 0.5150, Testset - Loss: 1.6897, Accuracy: 0.4186
+// Epoch [8/1000], Trainset - Loss: 1.3521, Accuracy: 0.5293, Testset - Loss: 1.5594, Accuracy: 0.4474
+// Epoch [9/1000], Trainset - Loss: 1.3341, Accuracy: 0.5334, Testset - Loss: 1.6216, Accuracy: 0.4630
+// Epoch [10/1000], Trainset - Loss: 1.3179, Accuracy: 0.5389, Testset - Loss: 1.8216, Accuracy: 0.3816
+// Epoch [11/1000], Trainset - Loss: 1.3090, Accuracy: 0.5420, Testset - Loss: 1.1936, Accuracy: 0.5798
+// Best epoch so far! Saving to file...
+// Epoch [12/1000], Trainset - Loss: 1.2924, Accuracy: 0.5487, Testset - Loss: 2.9033, Accuracy: 0.3114
+// Epoch [13/1000], Trainset - Loss: 1.2828, Accuracy: 0.5509, Testset - Loss: 1.4341, Accuracy: 0.5238
+// Epoch [14/1000], Trainset - Loss: 1.2713, Accuracy: 0.5539, Testset - Loss: 1.9378, Accuracy: 0.3994
+// Epoch [15/1000], Trainset - Loss: 1.2729, Accuracy: 0.5557, Testset - Loss: 1.5909, Accuracy: 0.4954
+// Epoch [16/1000], Trainset - Loss: 1.2593, Accuracy: 0.5597, Testset - Loss: 1.2222, Accuracy: 0.5648
+// Epoch [17/1000], Trainset - Loss: 1.2653, Accuracy: 0.5592, Testset - Loss: 1.3044, Accuracy: 0.5542
+// Epoch [18/1000], Trainset - Loss: 1.2476, Accuracy: 0.5621, Testset - Loss: 1.4633, Accuracy: 0.5108
+// Epoch [19/1000], Trainset - Loss: 1.2503, Accuracy: 0.5647, Testset - Loss: 1.3246, Accuracy: 0.5324
+// Epoch [20/1000], Trainset - Loss: 1.2435, Accuracy: 0.5660, Testset - Loss: 1.3351, Accuracy: 0.5344
+// Epoch [21/1000], Trainset - Loss: 1.2254, Accuracy: 0.5736, Testset - Loss: 1.4007, Accuracy: 0.5184
+// Epoch [22/1000], Trainset - Loss: 1.2335, Accuracy: 0.5680, Testset - Loss: 2.3623, Accuracy: 0.3252
+// Epoch [23/1000], Trainset - Loss: 1.2253, Accuracy: 0.5731, Testset - Loss: 1.3501, Accuracy: 0.5310
+// Epoch [24/1000], Trainset - Loss: 1.2119, Accuracy: 0.5766, Testset - Loss: 1.4339, Accuracy: 0.4966
+// Epoch [25/1000], Trainset - Loss: 1.2064, Accuracy: 0.5816, Testset - Loss: 1.9057, Accuracy: 0.4402
+// Epoch [26/1000], Trainset - Loss: 1.2071, Accuracy: 0.5804, Testset - Loss: 1.9590, Accuracy: 0.4182
+// Epoch [27/1000], Trainset - Loss: 1.2135, Accuracy: 0.5782, Testset - Loss: 1.4504, Accuracy: 0.5248
+// Epoch [28/1000], Trainset - Loss: 1.2001, Accuracy: 0.5799, Testset - Loss: 1.5078, Accuracy: 0.5308
+// Epoch [29/1000], Trainset - Loss: 1.1982, Accuracy: 0.5823, Testset - Loss: 1.5073, Accuracy: 0.5452
+// Epoch [30/1000], Trainset - Loss: 1.1786, Accuracy: 0.5895, Testset - Loss: 1.3825, Accuracy: 0.5054
+// Epoch [31/1000], Trainset - Loss: 1.1960, Accuracy: 0.5830, Testset - Loss: 1.1640, Accuracy: 0.6058
+// Best epoch so far! Saving to file...
+// Epoch [32/1000], Trainset - Loss: 1.1858, Accuracy: 0.5888, Testset - Loss: 1.4652, Accuracy: 0.4968
+// Epoch [33/1000], Trainset - Loss: 1.1864, Accuracy: 0.5873, Testset - Loss: 1.2306, Accuracy: 0.5816
+// Epoch [34/1000], Trainset - Loss: 1.1658, Accuracy: 0.5927, Testset - Loss: 3.2710, Accuracy: 0.2566
+// Epoch [35/1000], Trainset - Loss: 1.1658, Accuracy: 0.5925, Testset - Loss: 2.1480, Accuracy: 0.3970
+// Epoch [36/1000], Trainset - Loss: 1.1622, Accuracy: 0.5964, Testset - Loss: 1.7896, Accuracy: 0.4714
+// Epoch [37/1000], Trainset - Loss: 1.1553, Accuracy: 0.5959, Testset - Loss: 1.9960, Accuracy: 0.4154
+// Epoch [38/1000], Trainset - Loss: 1.1519, Accuracy: 0.6021, Testset - Loss: 1.4062, Accuracy: 0.4976
+// Epoch [39/1000], Trainset - Loss: 1.1729, Accuracy: 0.5931, Testset - Loss: 2.1496, Accuracy: 0.3444
+// Epoch [40/1000], Trainset - Loss: 1.1500, Accuracy: 0.6008, Testset - Loss: 1.4632, Accuracy: 0.5020
+// Epoch [41/1000], Trainset - Loss: 1.1492, Accuracy: 0.6018, Testset - Loss: 1.6171, Accuracy: 0.4922
+// Epoch [42/1000], Trainset - Loss: 1.1476, Accuracy: 0.5988, Testset - Loss: 1.6462, Accuracy: 0.4426
+// Epoch [43/1000], Trainset - Loss: 1.1427, Accuracy: 0.6015, Testset - Loss: 1.7843, Accuracy: 0.4594
+// Epoch [44/1000], Trainset - Loss: 1.1367, Accuracy: 0.6051, Testset - Loss: 1.3360, Accuracy: 0.5364
+// Epoch [45/1000], Trainset - Loss: 1.1433, Accuracy: 0.6004, Testset - Loss: 2.9395, Accuracy: 0.3404
+// Epoch [46/1000], Trainset - Loss: 1.1349, Accuracy: 0.6047, Testset - Loss: 3.1447, Accuracy: 0.2622
+// Epoch [47/1000], Trainset - Loss: 1.1380, Accuracy: 0.6055, Testset - Loss: 1.8720, Accuracy: 0.3940
+// Epoch [48/1000], Trainset - Loss: 1.1220, Accuracy: 0.6105, Testset - Loss: 1.8749, Accuracy: 0.3860
+// Epoch [49/1000], Trainset - Loss: 1.1172, Accuracy: 0.6116, Testset - Loss: 1.2108, Accuracy: 0.5908
+// Epoch [50/1000], Trainset - Loss: 1.1267, Accuracy: 0.6078, Testset - Loss: 2.5397, Accuracy: 0.3502

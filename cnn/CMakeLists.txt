@@ -1,9 +1,54 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+project(cnn VERSION 1.0.0 LANGUAGES CXX)
 
-project(convolutional-neural-network VERSION 1.0.0 LANGUAGES CXX)
+option(HIP_PLATFORM_AMD "should be built for AMD" OFF)
+option(MEASURE_TIME "measure time too?" OFF)
+
+if(${HIP_PLATFORM_AMD})
+    include_directories(/opt/rocm/hiprand/include)
+    include_directories(/opt/rocm/rocrand/include)
+    include_directories(/opt/rocm/hipblas/include)
+    include_directories(/opt/rocm/hip/include)
+    link_directories(/opt/rocm/lib)
+    add_definitions(-D__HIP_PLATFORM_AMD__ -D__HIP_PLATFORM_HCC__)
+else()
+    include_directories(/usr/local/cuda/targets/x86_64-linux/include)
+endif()
+
+if (NOT ${HIP_PLATFORM_AMD})
+    set(CUDA_ARCH "-arch=sm_80" CACHE STRING "Value of the NVCC -arch option.")
+    if(${CMAKE_VERSION} VERSION_EQUAL 3.7 OR ${CMAKE_VERSION} VERSION_GREATER 3.7)
+        option(AUTO_DETECT_ARCH "Detect local GPU compute arch automatically" ON)
+    endif()
+    message(STATUS "CUDA_ARCH: \"${CUDA_ARCH}\"")
+    SET(CUDA_NVCC_FLAGS "--expt-relaxed-constexpr")
+    SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++17 )
+
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --ptxas-options=-v")# -allow-unsupported-compiler")
+
+    SET(CUDA_PROPAGATE_HOST_FLAGS ON)
+    SET(CUDA_SEPARABLE_COMPILATION ON)
+    SET(CUDA_VERBOSE_BUILD ON)
+
+    find_package(CUDA REQUIRED)
+endif()
+
+if(${MEASURE_TIME})
+    add_definitions(-DMEASURE_TIME)
+endif()
+
+if (NOT ${HIP_PLATFORM_AMD})
+   add_subdirectory(src/Eden_resources)
+   add_subdirectory(src/cudatest)
+else()
+   add_subdirectory(src/HipEdenResources)
+endif()
+
 find_package(Torch REQUIRED)
+find_package(fmt REQUIRED)
+find_package(spdlog REQUIRED)
 
-set(EXECUTABLE_NAME convolutional-neural-network)
+set(EXECUTABLE_NAME cnn)
 
 add_executable(${EXECUTABLE_NAME})
 target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
@@ -16,7 +61,7 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include)
 
 add_subdirectory(utils/image_io)
-target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io)
+target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} eden_resources image-io fmt spdlog)
 
 # External dependencies
 add_subdirectory("extern")
