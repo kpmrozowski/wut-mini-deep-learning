@@ -6,4 +6,6 @@ namespace image_manip {
     torch::Tensor cv_to_torch(cv::Mat in);
     torch::Tensor flip_x(torch::Tensor in);
     torch::Tensor flip_y(torch::Tensor in);
+    torch::Tensor rotate(torch::Tensor in, float angle);
+    torch::Tensor crop(torch::Tensor in, int x0, int x1, int y0, int y1);
 } // namespace image_manip
