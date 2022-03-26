@@ -46,6 +46,7 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
                                           include/convnet.h
                                           include/image_manip.h
                                           include/imagefolder_dataset.h
+                                          include/augumentation.h
 )
 
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include)

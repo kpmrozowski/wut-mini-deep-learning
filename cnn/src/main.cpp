@@ -10,6 +10,7 @@
 #ifdef WITH_CUDA
 #include <Eden_resources/Ngpus_Ncpus.h>
 #endif
+#include "augumentation.h"
 
 using dataset::ImageFolderDataset;
 
@@ -39,6 +40,7 @@ int main(int argc, char **argv) {
         l2,
     } regularization_type = regularization_type::l1;
     const double regularization_lambda = 1e-4;
+    const augumentation::augumentation_type augumentation_type = augumentation::augumentation_type::mixup;
     
     torch::cuda::manual_seed(seed_cuda);
     torch::cuda::manual_seed_all(seed_cuda);
@@ -48,7 +50,7 @@ int main(int argc, char **argv) {
     auto load_data_start = util::unix_time();
 #endif
     // Imagenette dataset
-    auto train_dataset = ImageFolderDataset(imagenette_data_path, ImageFolderDataset::Mode::TRAIN, {160, 160})
+    auto train_dataset = augumentation::augumented_dataset(ImageFolderDataset(imagenette_data_path, ImageFolderDataset::Mode::TRAIN, {160, 160}), augumentation_type)
         .map(torch::data::transforms::Normalize<>({0.485, 0.456, 0.406}, {0.229, 0.224, 0.225}))
         .map(torch::data::transforms::Stack<>());
 
