@@ -34,12 +34,14 @@ endif()
 find_package(Torch REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(OpenCV REQUIRED)
 
 set(EXECUTABLE_NAME cnn)
 
 add_executable(${EXECUTABLE_NAME})
 target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
                                           src/convnet.cpp
+                                          src/image_manip.cpp
                                           src/imagefolder_dataset.cpp
                                           include/convnet.h
                                           include/imagefolder_dataset.h
@@ -48,7 +50,7 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include)
 
 add_subdirectory(utils/image_io)
-target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt spdlog)
+target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt spdlog opencv_core opencv_imgproc opencv_imgcodecs)
 
 if (${WITH_CUDA})
    target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} eden_resources)
