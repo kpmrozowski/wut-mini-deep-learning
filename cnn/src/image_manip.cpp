@@ -49,4 +49,8 @@ namespace image_manip {
         cv::resize(cropped, out_cv, in_cv.size(), cv::INTER_LINEAR);
         return cv_to_torch(out_cv);
     }
+
+    torch::Tensor mixup(torch::Tensor in0, torch::Tensor in1, float alpha) {
+        return in0 * alpha + in1 * (1 - alpha);
+    }
 } // namespace image_manip
