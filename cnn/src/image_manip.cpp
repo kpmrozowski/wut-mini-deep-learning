@@ -46,8 +46,6 @@ namespace image_manip {
         auto in_cv = torch_to_cv(in);
         auto cropped = in_cv(cv::Rect(x0, y0, x1 - x0, y1 - y0));
         cv::Mat out_cv;
-        std::cout << in_cv.size() << "\n";
-        std::cout << cropped.size() << "\n";
         cv::resize(cropped, out_cv, in_cv.size(), cv::INTER_LINEAR);
         return cv_to_torch(out_cv);
     }
