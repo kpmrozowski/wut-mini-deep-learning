@@ -1,21 +1,12 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(cnn VERSION 1.0.0 LANGUAGES CXX)
 
-option(HIP_PLATFORM_AMD "should be built for AMD" OFF)
-option(MEASURE_TIME "measure time too?" OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+option(WITH_CUDA "should be built for CUDA" OFF)
+option(MEASURE_TIME "measure time too?" ON)
 
-if(${HIP_PLATFORM_AMD})
-    include_directories(/opt/rocm/hiprand/include)
-    include_directories(/opt/rocm/rocrand/include)
-    include_directories(/opt/rocm/hipblas/include)
-    include_directories(/opt/rocm/hip/include)
-    link_directories(/opt/rocm/lib)
-    add_definitions(-D__HIP_PLATFORM_AMD__ -D__HIP_PLATFORM_HCC__)
-else()
+if (${WITH_CUDA})
     include_directories(/usr/local/cuda/targets/x86_64-linux/include)
-endif()
-
-if (NOT ${HIP_PLATFORM_AMD})
     set(CUDA_ARCH "-arch=sm_80" CACHE STRING "Value of the NVCC -arch option.")
     if(${CMAKE_VERSION} VERSION_EQUAL 3.7 OR ${CMAKE_VERSION} VERSION_GREATER 3.7)
         option(AUTO_DETECT_ARCH "Detect local GPU compute arch automatically" ON)
@@ -31,17 +22,13 @@ if (NOT ${HIP_PLATFORM_AMD})
     SET(CUDA_VERBOSE_BUILD ON)
 
     find_package(CUDA REQUIRED)
+    add_definitions(-DWITH_CUDA)
+    add_subdirectory(src/Eden_resources)
+    add_subdirectory(src/cudatest)
 endif()
 
 if(${MEASURE_TIME})
     add_definitions(-DMEASURE_TIME)
-endif()
-
-if (NOT ${HIP_PLATFORM_AMD})
-   add_subdirectory(src/Eden_resources)
-   add_subdirectory(src/cudatest)
-else()
-   add_subdirectory(src/HipEdenResources)
 endif()
 
 find_package(Torch REQUIRED)
@@ -61,7 +48,11 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include)
 
 add_subdirectory(utils/image_io)
-target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} eden_resources image-io fmt spdlog)
+target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt spdlog)
+
+if (${WITH_CUDA})
+   target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} eden_resources)
+endif()
 
 # External dependencies
 add_subdirectory("extern")

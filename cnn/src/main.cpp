@@ -1,12 +1,15 @@
-// Copyright 2020-present pytorch-cpp Authors
 #include <torch/torch.h>
 #include <iostream>
 #include <iomanip>
 #include "convnet.h"
 #include "imagefolder_dataset.h"
 #include <Util/CSVLogger.h>
+#ifdef MEASURE_TIME
 #include <Util/Time.h>
+#endif
+#ifdef WITH_CUDA
 #include <Eden_resources/Ngpus_Ncpus.h>
+#endif
 
 using dataset::ImageFolderDataset;
 
@@ -17,9 +20,11 @@ int main(int argc, char **argv) {
     auto cuda_available = torch::cuda::is_available();
     torch::Device device(cuda_available ? torch::kCUDA : torch::kCPU);
     std::cout << (cuda_available ? "CUDA available. Training on GPU." : "Training on CPU.") << '\n';
+#ifdef WITH_CUDA
     unsigned num_gpus = Eden_resources::get_gpus_count();
     unsigned gpu_idx = 7;
     if (cuda_available) device.set_index(gpu_idx < num_gpus ? gpu_idx : num_gpus - 1);
+#endif
 
     // Hyper parameters
     const int64_t num_classes = 10;
@@ -38,7 +43,10 @@ int main(int argc, char **argv) {
     torch::cuda::manual_seed(seed_cuda);
     torch::cuda::manual_seed_all(seed_cuda);
     const std::string imagenette_data_path = argc >= 2 ? argv[1] : "../../../../cifar-10";
-
+    
+#ifdef MEASURE_TIME
+    auto load_data_start = util::unix_time();
+#endif
     // Imagenette dataset
     auto train_dataset = ImageFolderDataset(imagenette_data_path, ImageFolderDataset::Mode::TRAIN, {160, 160})
         .map(torch::data::transforms::Normalize<>({0.485, 0.456, 0.406}, {0.229, 0.224, 0.225}))
@@ -62,6 +70,9 @@ int main(int argc, char **argv) {
         std::move(test_dataset), batch_size);
 
     double best_loss = std::numeric_limits<double>::max();
+#ifdef MEASURE_TIME
+    fmt::print("load_data={}ms\n", util::unix_time() - load_data_start);
+#endif
 
     // Model
     ConvNet model(num_classes);

@@ -1,5 +1,5 @@
-test/out
-cnn/out
+out
+.cache
 compile_commands.json
 # Prerequisites
 *.d
