@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(cnn VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
-option(WITH_CUDA "should be built for CUDA" OFF)
+option(WITH_CUDA "should be built for CUDA" ON)
 option(MEASURE_TIME "measure time too?" ON)
 
 if (${WITH_CUDA})
@@ -12,10 +12,9 @@ if (${WITH_CUDA})
         option(AUTO_DETECT_ARCH "Detect local GPU compute arch automatically" ON)
     endif()
     message(STATUS "CUDA_ARCH: \"${CUDA_ARCH}\"")
-    SET(CUDA_NVCC_FLAGS "--expt-relaxed-constexpr")
+    SET(CUDA_NVCC_FLAGS "--expt-relaxed-constexpr"; "-allow-unsupported-compiler")
     SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -std=c++17 )
-
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --ptxas-options=-v")# -allow-unsupported-compiler")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --ptxas-options=-v")
 
     SET(CUDA_PROPAGATE_HOST_FLAGS ON)
     SET(CUDA_SEPARABLE_COMPILATION ON)
@@ -33,7 +32,7 @@ endif()
 
 find_package(Torch REQUIRED)
 find_package(fmt REQUIRED)
-find_package(spdlog REQUIRED)
+# find_package(spdlog REQUIRED)
 find_package(OpenCV REQUIRED)
 
 set(EXECUTABLE_NAME cnn)
@@ -52,10 +51,11 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include)
 
 add_subdirectory(utils/image_io)
-target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt spdlog opencv_core opencv_imgproc opencv_imgcodecs)
 
 if (${WITH_CUDA})
-   target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} eden_resources)
+target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt opencv_core opencv_imgproc opencv_imgcodecs eden_resources)
+else()
+target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt opencv_core opencv_imgproc opencv_imgcodecs)
 endif()
 
 # External dependencies
