@@ -63,7 +63,9 @@ namespace augumentation {
                 return { image_manip::mixup(i_case.data, j_case.data, alpha), i_case.target * alpha + j_case.target * (1 - alpha) };
             }
             }
-        };
+            return inner.get(index);
+        }
+        
         torch::optional<size_t> size() const override {
             switch (type) {
             case augumentation_type::none:
@@ -77,6 +79,7 @@ namespace augumentation {
             case augumentation_type::mixup:
                 return *inner.size() * 5;
             }
+            return *inner.size();
         }
 
     private:
