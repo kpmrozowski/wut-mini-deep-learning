@@ -2,7 +2,9 @@
 #define UTIL_CONCURRENCY_H
 #include <fmt/core.h>
 #pragma once
+#ifdef WITH_CUDA
 #include <Eden_resources/Ngpus_Ncpus.h>
+#endif
 #include "augumentation.h"
 #include <condition_variable>
 #include <span>
@@ -74,8 +76,10 @@ class client_threads {
        , imagenette_data_path(data_path)
        , m_joiner(m_threads, m_workers_up)
    {
+#ifdef WITH_CUDA
       if (cpus_count == 0)
          cpus_count = Eden_resources::get_cpus_count();
+#endif
       fmt::print("creating {} client threads", cpus_count);
       try {
          for (unsigned i = 0; i < cpus_count; ++i) {

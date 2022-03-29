@@ -318,12 +318,12 @@ int main(int argc, char **argv) {
         auto cuda_available = torch::cuda::is_available();
 #ifdef WITH_CUDA
         unsigned num_gpus = Eden_resources::get_gpus_count();
+#else
+        unsigned num_gpus = 1;
+#endif
         client_threads parallel_runs{num_gpus, setting, argc > 1 ? argv[1] : "../../../cifar-10/"};
         fmt::print("311");
         parallel_runs.join_clients();
-#else
-        for (int run_idx = 0; run_idx < RUNS_COUNT; ++run_idx) {}
-#endif
     }
 
     std::cout << "Training finished!\n\n";
