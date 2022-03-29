@@ -87,7 +87,7 @@ auto training_time = util::unix_time();
     auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
         std::move(test_dataset), batch_size);
     
-    double best_loss = std::numeric_limits<double>::max();
+    double best_accuracy = 0;
     
     util::CSVLogger g_logger_training(logs_path + ".csv", 
         (std::string{"Epoch_of_"} + std::to_string(num_epochs)).c_str(),
@@ -183,8 +183,8 @@ auto training_time = util::unix_time();
         std::cout << ", Testset - Loss: " << test_mean_loss << ", train_accuracy: " << test_accuracy << '\n';
         g_logger_training.log(epoch, train_mean_loss, train_accuracy, test_mean_loss, test_accuracy);
         
-        if (test_mean_loss < best_loss) {
-            best_loss = test_mean_loss;
+        if (test_accuracy > best_accuracy) {
+            best_accuracy = test_accuracy;
             std::cout << "Epoch " << epoch << " is the best so far! Saving to file...\n";
             torch::serialize::OutputArchive archive;
             model->save(archive);
