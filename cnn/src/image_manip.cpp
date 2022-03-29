@@ -5,16 +5,26 @@
 
 namespace image_manip {
     // Heavily adapted from https://discuss.pytorch.org/t/libtorch-c-convert-a-tensor-to-cv-mat-single-channel/47701/6
+    // Or at least were in the past, by now I'm not so sure.
     cv::Mat torch_to_cv(torch::Tensor in) {
-        cv::Mat out(in.sizes()[1], in.sizes()[2], CV_8UC3);
-        auto in_ = in * 255;
-        std::memcpy((void *) out.data, at::_cast_Byte(in_).data_ptr(), sizeof(torch::kU8) * in.numel());
+        cv::Mat out(in.sizes()[1], in.sizes()[2], CV_32FC3);
+        for (auto i = 0; i < in.sizes()[1]; ++i) {
+            for (auto j = 0; j < in.sizes()[2]; ++j) {
+                out.at<cv::Vec3f>(cv::Point(i, j)) = cv::Vec3f(in[0][i][j].item<float>(), in[1][i][j].item<float>(), in[2][i][j].item<float>());
+            }
+        }
         return out;
     }
     torch::Tensor cv_to_torch(cv::Mat in) {
-        in.convertTo(in, CV_32FC3, 1.0f / 255.0f);
-        auto out = torch::from_blob(in.data, {3, in.cols, in.rows});
-        out = out.clone();
+        auto out = at::empty({3, in.cols, in.rows});
+        for (auto i = 0; i < in.cols; ++i) {
+            for (auto j = 0; j < in.rows; ++j) {
+                auto p = in.at<cv::Vec3f>(cv::Point(i, j));
+                out[0][i][j] = p[0];
+                out[1][i][j] = p[1];
+                out[2][i][j] = p[2];
+            }
+        }
         return out;
     }
 
