@@ -42,6 +42,8 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
                                           src/convnet.cpp
                                           src/image_manip.cpp
                                           src/imagefolder_dataset.cpp
+                                          src/train_options.cpp
+                                          src/Concurrency.cpp
                                           include/convnet.h
                                           include/image_manip.h
                                           include/imagefolder_dataset.h
@@ -65,7 +67,7 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
   CXX_STANDARD 17
   CXX_STANDARD_REQUIRED YES
 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -no-pie")
 if(DOWNLOAD_DATASETS)
     add_dependencies(${EXECUTABLE_NAME} imagenette)
 endif()

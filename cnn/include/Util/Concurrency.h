@@ -5,26 +5,10 @@
 #ifdef WITH_CUDA
 #include <Eden_resources/Ngpus_Ncpus.h>
 #endif
-#include "augumentation.h"
 #include <condition_variable>
-
-namespace regularization {
-
-enum class regularization_type {
-    none,
-    l1,
-    l2,
-};
-
-}
-
-typedef std::tuple<
-    regularization::regularization_type,
-    double,
-    augumentation::augumentation_type,
-    std::string,
-    int> SimulationSetting;
-
+#include <thread>
+#include <fmt/core.h>
+#include <train_options.h>
 
 class join_threads {
    std::vector<std::thread> &threads;
@@ -69,7 +53,7 @@ class client_threads {
  public:
    std::string imagenette_data_path;
    SimulationSetting setting;
-   client_threads(unsigned cpus_count, SimulationSetting s, std::string data_path = "../../../cifar-10")
+   client_threads(unsigned cpus_count, SimulationSetting s, std::string data_path = CIFAR_PATH)
        : m_done(false)
        , m_joiner(m_threads, m_workers_up)
        , imagenette_data_path(data_path)

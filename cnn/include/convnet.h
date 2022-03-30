@@ -1,6 +1,8 @@
 // Copyright 2020-present pytorch-cpp Authors
 #pragma once
 
+#include <ATen/ops/_cudnn_init_dropout_state.h>
+#include <ATen/ops/dropout.h>
 #include <torch/nn/modules/activation.h>
 #include <torch/nn/modules/dropout.h>
 #include <torch/nn/modules/padding.h>
@@ -24,21 +26,24 @@ class ConvNetImpl : public torch::nn::Module {
         torch::nn::Conv2d(torch::nn::Conv2dOptions(16, 32, 3).stride(1)),
         torch::nn::BatchNorm2d(32),
         torch::nn::ReLU(),
-        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
+        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2)),
+        torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2))
     };
 
     torch::nn::Sequential layer03{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(32, 64, 3).stride(1)),
         torch::nn::BatchNorm2d(64),
         torch::nn::ReLU(),
-        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
+        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2)),
+        torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2))
     };
 
     torch::nn::Sequential layer04{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 128, 3).stride(1)),
         torch::nn::BatchNorm2d(128),
         torch::nn::ReLU(),
-        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
+        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2)),
+        torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2))
     };
 
     torch::nn::Sequential layer05{
