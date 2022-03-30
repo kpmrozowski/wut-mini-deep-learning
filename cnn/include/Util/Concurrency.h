@@ -68,13 +68,13 @@ class client_threads {
    void client_work(int run_idx);
 
  public:
-   SimulationSetting setting;
    std::string imagenette_data_path;
+   SimulationSetting setting;
    client_threads(unsigned cpus_count, SimulationSetting s, std::string data_path = "../../../cifar-10")
        : m_done(false)
-       , setting(s)
-       , imagenette_data_path(data_path)
        , m_joiner(m_threads, m_workers_up)
+       , imagenette_data_path(data_path)
+       , setting(s)
    {
 #ifdef WITH_CUDA
       if (cpus_count == 0)

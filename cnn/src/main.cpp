@@ -1,3 +1,5 @@
+#include <torch/optim/schedulers/lr_scheduler.h>
+#include <torch/optim/schedulers/step_lr.h>
 #include <torch/torch.h>
 #include <iostream>
 #include <iomanip>
@@ -15,6 +17,30 @@
 #endif
 #define RUNS_COUNT 7
 
+class MyScheluder : public torch::optim::LRScheduler {
+public:
+
+    MyScheluder(torch::optim::Optimizer& optimizer,
+        const double base_lr)
+    : torch::optim::LRScheduler(optimizer)
+    , base_lr_(base_lr)
+    , current_lr_(base_lr) {}
+
+    double current_lr() { return current_lr_; }
+private:
+    std::vector<double> get_lrs() override {
+        ++epoch;
+        current_lr_ = 0.36 * (std::atan(-(epoch - 10) / 4) + M_PI_2) * base_lr_;
+        auto new_lrs = this->get_current_lrs();
+        std::fill(new_lrs.begin(), new_lrs.end(), current_lr_);
+        return new_lrs;
+    }
+  const double base_lr_;
+  uint epoch = 0;
+  double current_lr_;
+
+};
+
 void client_threads::client_work(int run_idx)
 {
 #ifdef MEASURE_TIME
@@ -22,8 +48,8 @@ auto training_time = util::unix_time();
 #endif
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 128;
-    const size_t num_epochs = 10;
+    const int64_t batch_size = 2048;//2048;
+    const size_t num_epochs = 20;
     const double learning_rate = 1e-3;
     const double weight_decay = 1e-3;
     const uint64_t seed_cuda = 123;
@@ -102,6 +128,10 @@ auto training_time = util::unix_time();
     torch::optim::Adam optimizer(
         model->parameters(), torch::optim::AdamOptions(learning_rate).weight_decay(weight_decay));
     
+    // Learning rate sheluder
+    // torch::optim::StepLR scheduler{optimizer, 1, 0.1};
+    MyScheluder scheduler{optimizer, learning_rate};
+    
     // Set floating point output precision
     std::cout << std::fixed << std::setprecision(4);
     
@@ -152,12 +182,13 @@ auto training_time = util::unix_time();
             loss.backward();
             optimizer.step();
         } // batch loop
+        scheduler.step();
 
         auto train_mean_loss = running_loss / num_train_samples;
         auto train_accuracy = static_cast<double>(num_correct) / num_train_samples;
 
         std::cout << "Epoch [" << (epoch + 1) << "/" << num_epochs << "], Trainset - Loss: "
-            << train_mean_loss << ", train_accuracy: " << train_accuracy;
+            << train_mean_loss << ", train_accuracy: " << train_accuracy << ", lr: " << scheduler.current_lr();
 
         // <> Test the model
         model->eval();
@@ -233,22 +264,15 @@ auto training_time = util::unix_time();
 #endif
 }
 
-int main(int argc, char **argv) {
-    std::cout << "Convolutional Neural Network\n\n";
-    if (argc > 1) {
-        std::string command{argv[1]};
-        if (command == "-h" | command == "--help") {
-            fmt::print("HELP:\n./cnn <path_to_cifar-10>\n\n");
-        }
-    }
+std::vector<SimulationSetting> prepare_settings() {
     regularization::regularization_type  regularization_type;
     double regularization_lambda;
     augumentation::augumentation_type augumentation_type;
     std::vector<SimulationSetting> settings;
 
-    int experiment_type_idx = 0;
+    int experiment_type_idx = 6;
     std::vector<std::string> experiment_name(6, "");
-    for (int reg_type_idx = 0; reg_type_idx < 3; ++reg_type_idx) {
+    for (int reg_type_idx = 0; reg_type_idx < 2; ++reg_type_idx) {
         experiment_name.at(0) = "REG_";
         switch (reg_type_idx) {
         case 0:
@@ -264,8 +288,12 @@ int main(int argc, char **argv) {
             experiment_name.at(1) = "l2_";
             break;
         }
-        for (int reg_lambda_idx = 0; reg_lambda_idx < 2; ++reg_lambda_idx) {
+        for (int reg_lambda_idx = 0; reg_lambda_idx < 3; ++reg_lambda_idx) {
             experiment_name.at(2) = "REGLAM_";
+            if (regularization_type == regularization::regularization_type::none) {
+                experiment_name.at(3) = "none";
+                continue;
+            }
             switch (reg_lambda_idx) {
             case 0:
                 regularization_lambda = 1e-4;
@@ -314,8 +342,21 @@ int main(int argc, char **argv) {
             }
         }
     }
+    return settings;
+}
+
+int main(int argc, char **argv) {
+    std::cout << "Convolutional Neural Network\n\n";
+    if (argc > 1) {
+        std::string command{argv[1]};
+        if ((command == "-h") | (command == "--help")) {
+            fmt::print("HELP:\n./cnn <path_to_cifar-10>\n\n");
+        }
+    }
+    std::vector<SimulationSetting> settings = prepare_settings();
+    fmt::print("settings size = {}\n", settings.size());
     for (const auto& setting : settings) {    
-        auto cuda_available = torch::cuda::is_available();
+        // auto cuda_available = torch::cuda::is_available();
 #ifdef WITH_CUDA
         unsigned num_gpus = Eden_resources::get_gpus_count();
 #else

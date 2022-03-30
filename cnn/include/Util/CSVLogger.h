@@ -17,7 +17,7 @@ class CSVLogger {
    explicit CSVLogger(std::string_view filename, ARGS ...args) noexcept : m_file(fmt::output_file(filename.data(), fmt::buffer_size=4096)) {
       std::stringstream stream;
       stream << "{}";
-      for (int i = 1; i < sizeof...(ARGS); ++i) {
+      for (size_t i = 1; i < sizeof...(ARGS); ++i) {
          stream << ",{}";
       }
       stream << '\n';

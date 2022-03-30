@@ -5,6 +5,7 @@
 #include <vector>
 #include <random>
 #include "image_manip.h"
+#define TO_SIZE_T(x) ((x) >= 0 ? static_cast<size_t>(x) : 0)
 
 namespace augumentation {
     enum class augumentation_type {
@@ -56,7 +57,7 @@ namespace augumentation {
                 auto i = index / 5;
                 if (index % 5 == 0) { return inner.get(i); }
                 auto j = rng_int(index * 2, *inner.size() - 2);
-                if (j >= i) { j += 1; }
+                if (TO_SIZE_T(j) >= i) { j += 1; }
                 auto i_case = inner.get(i);
                 auto j_case = inner.get(j);
                 auto alpha = rng_float(index * 2 + 1);
