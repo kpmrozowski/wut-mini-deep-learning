@@ -29,17 +29,11 @@ namespace image_manip {
     }
 
     torch::Tensor flip_x(torch::Tensor in) {
-        auto in_cv = torch_to_cv(in);
-        cv::Mat out_cv;
-        cv::flip(in_cv, out_cv, 1);
-        return cv_to_torch(out_cv);
+        return in.flip({1});
     }
 
     torch::Tensor flip_y(torch::Tensor in) {
-        auto in_cv = torch_to_cv(in);
-        cv::Mat out_cv;
-        cv::flip(in_cv, out_cv, 0);
-        return cv_to_torch(out_cv);
+        return in.flip({2});
     }
 
     torch::Tensor rotate(torch::Tensor in, float angle) {
@@ -53,11 +47,8 @@ namespace image_manip {
     }
 
     torch::Tensor crop(torch::Tensor in, int x0, int x1, int y0, int y1) {
-        auto in_cv = torch_to_cv(in);
-        auto cropped = in_cv(cv::Rect(x0, y0, x1 - x0, y1 - y0));
-        cv::Mat out_cv;
-        cv::resize(cropped, out_cv, in_cv.size(), cv::INTER_LINEAR);
-        return cv_to_torch(out_cv);
+        auto cropped = in.slice(1, x0, x1).slice(2, y0, y1);
+        return torch::nn::functional::interpolate(cropped.unsqueeze(0), torch::nn::functional::InterpolateFuncOptions().size(std::vector<long> {in.size(1), in.size(2)})).squeeze();
     }
 
     torch::Tensor mixup(torch::Tensor in0, torch::Tensor in1, float alpha) {
