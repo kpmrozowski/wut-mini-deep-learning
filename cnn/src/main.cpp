@@ -4,11 +4,10 @@
 #include <iostream>
 #include <iomanip>
 #include <tuple>
-#include "convnet.h"
-#include "imagefolder_dataset.h"
+#include <convnet.h>
+#include <imagefolder_dataset.h>
 #include <Util/CSVLogger.h>
 #include <Util/Concurrency.h>
-#include "imagefolder_dataset.h"
 #ifdef MEASURE_TIME
 #include <Util/Time.h>
 #endif
@@ -16,6 +15,9 @@
 #include <Eden_resources/Ngpus_Ncpus.h>
 #endif
 #define RUNS_COUNT 7
+#define CIFAR_PATH "/workspace/cifar-10"
+#define LOGS_PATH "/workspace/wut-mini-deep-learning/cnn/logs"
+#define MODELS_PATH "/workspace/wut-mini-deep-learning/cnn/models"
 
 class MyScheluder : public torch::optim::LRScheduler {
 public:
@@ -27,17 +29,17 @@ public:
     , current_lr_(base_lr) {}
 
     double current_lr() { return current_lr_; }
+    void set_epoch(uint e) { epoch = e; }
 private:
     std::vector<double> get_lrs() override {
-        ++epoch;
         current_lr_ = 0.36 * (std::atan(-(epoch - 10) / 4) + M_PI_2) * base_lr_;
         auto new_lrs = this->get_current_lrs();
         std::fill(new_lrs.begin(), new_lrs.end(), current_lr_);
         return new_lrs;
     }
-  const double base_lr_;
-  uint epoch = 0;
-  double current_lr_;
+    const double base_lr_;
+    uint epoch = 0;
+    double current_lr_;
 
 };
 
@@ -48,9 +50,11 @@ auto training_time = util::unix_time();
 #endif
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 3036;//2048;
-    const size_t num_epochs = 20;
-    const double learning_rate = 1e-3;
+    const int64_t batch_size = 4048;//3036=38GB;
+    const size_t num_epochs = 40;
+    const double learning_rate = 1e-2;
+    const double learning_rate_multiplayer = 0.9;
+    const uint learning_rate_decay_step = 1;
     const double weight_decay = 1e-3;
     const uint64_t seed_cuda = 123;
 
@@ -79,8 +83,8 @@ auto training_time = util::unix_time();
     experiment_run_name += experiment_name;
     experiment_run_name += "RUN_";
     experiment_run_name += std::to_string(run_idx);
-    const std::string logs_path{std::string{"logs/"} + experiment_run_name};
-    const std::string models_path{std::string{"models/"} + experiment_run_name};
+    const std::string logs_path{std::string{LOGS_PATH} + experiment_run_name};
+    const std::string models_path{std::string{MODELS_PATH} + experiment_run_name};
     
     // Imagenette dataset
     auto train_dataset = augumentation::augumented_dataset(
@@ -114,6 +118,7 @@ auto training_time = util::unix_time();
         std::move(test_dataset), batch_size);
     
     double best_accuracy = 0;
+    double current_lr = learning_rate * learning_rate_multiplayer;
     
     util::CSVLogger g_logger_training(logs_path + ".csv", 
         (std::string{"Epoch_of_"} + std::to_string(num_epochs)).c_str(),
@@ -129,8 +134,8 @@ auto training_time = util::unix_time();
         model->parameters(), torch::optim::AdamOptions(learning_rate).weight_decay(weight_decay));
     
     // Learning rate sheluder
-    // torch::optim::StepLR scheduler{optimizer, 1, 0.1};
-    MyScheluder scheduler{optimizer, learning_rate};
+    torch::optim::StepLR scheduler{optimizer, learning_rate_decay_step, learning_rate_multiplayer};
+    // MyScheluder scheduler{optimizer, learning_rate};
     
     // Set floating point output precision
     std::cout << std::fixed << std::setprecision(4);
@@ -182,13 +187,12 @@ auto training_time = util::unix_time();
             loss.backward();
             optimizer.step();
         } // batch loop
+        // scheduler.set_epoch(epoch);
         scheduler.step();
+        current_lr *= 0.9;
 
         auto train_mean_loss = running_loss / num_train_samples;
         auto train_accuracy = static_cast<double>(num_correct) / num_train_samples;
-
-        std::cout << "Epoch [" << (epoch + 1) << "/" << num_epochs << "], Trainset - Loss: "
-            << train_mean_loss << ", train_accuracy: " << train_accuracy << ", lr: " << scheduler.current_lr();
 
         // <> Test the model
         model->eval();
@@ -211,15 +215,19 @@ auto training_time = util::unix_time();
         double test_mean_loss = running_loss / num_test_samples;
         double test_accuracy = static_cast<double>(num_correct) / num_test_samples;
         
-        std::cout << ", Testset - Loss: " << test_mean_loss << ", train_accuracy: " << test_accuracy << '\n';
+        std::cout << "Epoch [" << (epoch + 1) << "/" << num_epochs
+            << "], Trainset - Loss: "<< train_mean_loss << ", train_accuracy: " << train_accuracy
+            << ", Testset - Loss: " << test_mean_loss << ", test_accuracy: " << test_accuracy 
+            << ", lr: " << current_lr << std::endl << std::flush;
         g_logger_training.log(epoch, train_mean_loss, train_accuracy, test_mean_loss, test_accuracy);
         
         if (test_accuracy > best_accuracy) {
             best_accuracy = test_accuracy;
-            std::cout << "Epoch " << epoch << " is the best so far! Saving to file...\n";
+            std::cout << "Epoch " << epoch << " is the best so far! Saving to file...";
             torch::serialize::OutputArchive archive;
             model->save(archive);
             archive.save_to(models_path);
+            std::cout << "Epoch " << epoch << " saved!" << std::endl << std::flush;
         }
     } // epoch loop
     
@@ -270,8 +278,9 @@ std::vector<SimulationSetting> prepare_settings() {
     augumentation::augumentation_type augumentation_type;
     std::vector<SimulationSetting> settings;
 
-    int experiment_type_idx = 6;
-    std::vector<std::string> experiment_name(6, "");
+    int experiment_type_idx = 7;
+    std::vector<std::string> experiment_name(7, "");
+    fmt::print("\nfiles that are gonna be created:\n");
     for (int reg_type_idx = 0; reg_type_idx < 3; ++reg_type_idx) {
         experiment_name.at(0) = "REG_";
         switch (reg_type_idx) {
@@ -290,10 +299,6 @@ std::vector<SimulationSetting> prepare_settings() {
         }
         for (int reg_lambda_idx = 0; reg_lambda_idx < 2; ++reg_lambda_idx) {
             experiment_name.at(2) = "REGLAM_";
-            if (regularization_type == regularization::regularization_type::none) {
-                experiment_name.at(3) = "none";
-                continue;
-            }
             switch (reg_lambda_idx) {
             case 0:
                 regularization_lambda = 1e-4;
@@ -304,7 +309,11 @@ std::vector<SimulationSetting> prepare_settings() {
                 experiment_name.at(3) = "1e-1_";
                 break;
             }
-            for (int aug_type_idx = 0; aug_type_idx < 5; ++aug_type_idx) {
+            if (regularization_type == regularization::regularization_type::none) {
+                experiment_name.at(3) = "none_";
+                if (reg_lambda_idx == 1) { continue; }
+            }
+            for (int aug_type_idx = 0; aug_type_idx < 1; ++aug_type_idx) {
                 experiment_name.at(4) = "AUG_";
                 switch (aug_type_idx) {
                 case 0:
@@ -328,6 +337,13 @@ std::vector<SimulationSetting> prepare_settings() {
                     experiment_name.at(5) = "mixup_";
                     break;
                 }
+                if (((regularization_type == regularization::regularization_type::l1
+                        or regularization_type == regularization::regularization_type::none)
+                    and regularization_lambda == 1e-4  
+                    and augumentation_type == augumentation::augumentation_type::none)
+                    or augumentation_type == augumentation::augumentation_type::flips) {
+                        continue;
+                  }
                 std::string exp_name = "";
                 for (const auto& name_part : experiment_name) {
                     exp_name += name_part;
@@ -338,6 +354,7 @@ std::vector<SimulationSetting> prepare_settings() {
                     augumentation_type,
                     exp_name,
                     experiment_type_idx);
+                fmt::print("EXP_{}_{}RUN_0-7.csv\n", experiment_type_idx, exp_name.c_str());
                 ++experiment_type_idx;
             }
         }
@@ -362,7 +379,9 @@ int main(int argc, char **argv) {
 #else
         unsigned num_gpus = 1;
 #endif
-        client_threads parallel_runs{num_gpus, setting, argc > 1 ? argv[1] : "../../../cifar-10/"};
+        std::string cifar_path{argc > 1 ? argv[1] : CIFAR_PATH};
+        fmt::print("cifar path: {}\n", cifar_path);
+        client_threads parallel_runs{num_gpus, setting, cifar_path};
         fmt::print("311");
         parallel_runs.join_clients();
     }

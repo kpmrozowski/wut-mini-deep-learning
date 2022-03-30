@@ -7,7 +7,6 @@
 #endif
 #include "augumentation.h"
 #include <condition_variable>
-#include <span>
 
 namespace regularization {
 
