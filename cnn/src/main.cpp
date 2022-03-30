@@ -48,7 +48,7 @@ auto training_time = util::unix_time();
 #endif
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 2048;//2048;
+    const int64_t batch_size = 3036;//2048;
     const size_t num_epochs = 20;
     const double learning_rate = 1e-3;
     const double weight_decay = 1e-3;
@@ -272,7 +272,7 @@ std::vector<SimulationSetting> prepare_settings() {
 
     int experiment_type_idx = 6;
     std::vector<std::string> experiment_name(6, "");
-    for (int reg_type_idx = 0; reg_type_idx < 2; ++reg_type_idx) {
+    for (int reg_type_idx = 0; reg_type_idx < 3; ++reg_type_idx) {
         experiment_name.at(0) = "REG_";
         switch (reg_type_idx) {
         case 0:
@@ -288,7 +288,7 @@ std::vector<SimulationSetting> prepare_settings() {
             experiment_name.at(1) = "l2_";
             break;
         }
-        for (int reg_lambda_idx = 0; reg_lambda_idx < 3; ++reg_lambda_idx) {
+        for (int reg_lambda_idx = 0; reg_lambda_idx < 2; ++reg_lambda_idx) {
             experiment_name.at(2) = "REGLAM_";
             if (regularization_type == regularization::regularization_type::none) {
                 experiment_name.at(3) = "none";
