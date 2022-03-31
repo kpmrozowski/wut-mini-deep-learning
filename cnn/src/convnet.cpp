@@ -3,7 +3,7 @@
 #include <torch/torch.h>
 
 ConvNetImpl::ConvNetImpl(int64_t num_classes)
-    : fc(256 * 4 * 4, num_classes) {
+    : fc1(256 * 4 * 4, 128), fc2(128, num_classes) {
     register_module("layer010", layer01);
     register_module("layer020", layer02);
     register_module("layer030", layer03);
@@ -21,7 +21,8 @@ ConvNetImpl::ConvNetImpl(int64_t num_classes)
    //  register_module("layer100", layer10);
    //  register_module("layer110", layer11);
     register_module("pool", pool),
-    register_module("fc", fc);
+    register_module("fc1", fc1);
+    register_module("fc2", fc2);
 }
 
 torch::Tensor ConvNetImpl::forward(torch::Tensor x) {
@@ -43,5 +44,6 @@ torch::Tensor ConvNetImpl::forward(torch::Tensor x) {
    //  x = layer11->forward(x);
     x = pool->forward(x);
     x = x.view({-1,  256 * 4 * 4});
-    return fc->forward(x);
+    x = fc1->forward(x);
+    return fc2->forward(x);
 }

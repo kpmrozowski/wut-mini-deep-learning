@@ -97,7 +97,8 @@ class ConvNetImpl : public torch::nn::Module {
 
     torch::nn::AdaptiveAvgPool2d pool{torch::nn::AdaptiveAvgPool2dOptions({4, 4})};
 
-    torch::nn::Linear fc;
+    torch::nn::Linear fc1;
+    torch::nn::Linear fc2;
 };
 
 TORCH_MODULE(ConvNet);
