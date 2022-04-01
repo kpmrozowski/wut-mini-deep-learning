@@ -3,7 +3,7 @@ project(cnn VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 option(WITH_CUDA "should be built for CUDA" ON)
-option(MEASURE_TIME "measure time too?" ON)
+option(MEASURE_TIME "measure time too?" OFF)
 
 if (${WITH_CUDA})
     include_directories(/usr/local/cuda/targets/x86_64-linux/include)

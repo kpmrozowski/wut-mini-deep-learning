@@ -4,8 +4,10 @@
 #include "augumentation.h"
 
 #define CIFAR_PATH "/raid/cifar-10/"
-#define LOGS_PATH "/raid/wut-mini-deep-learning/cnn/logs/"
-#define MODELS_PATH "/raid/wut-mini-deep-learning/cnn/models/"
+// #define LOGS_PATH "/raid/wut-mini-deep-learning/cnn/logs/"
+// #define MODELS_PATH "/raid/wut-mini-deep-learning/cnn/models/"
+#define LOGS_PATH "/workspace/wut-mini-deep-learning/cnn/logs/"
+#define MODELS_PATH "/workspace/wut-mini-deep-learning/cnn/models/"
 
 namespace regularization {
 

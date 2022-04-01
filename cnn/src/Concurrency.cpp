@@ -11,16 +11,17 @@
 
 void client_threads::client_work(int run_idx)
 {
+   at::init_num_threads();
 #ifdef MEASURE_TIME
-auto training_time = util::unix_time();
+   auto training_time = util::unix_time();
 #endif
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 4048;//4048=39GB;
-    const size_t num_epochs = 40;
+    const int64_t batch_size = 256;//4048=39GB;
+    const size_t num_epochs = 5;
     const double learning_rate = 4e-3;
-    const double learning_rate_multiplayer = 0.4;
-    const uint learning_rate_decay_step = 9;
+    const double learning_rate_multiplayer = 0.83;
+    const uint learning_rate_decay_step = 10;
     const double weight_decay = 1e-3;
     const uint64_t seed_cuda = 123;
 
@@ -29,6 +30,16 @@ auto training_time = util::unix_time();
     auto augumentation_type = std::get<2>(setting);     // augumentation::augumentation_type
     auto experiment_name = std::get<3>(setting);        // string
     auto experiment_type_idx = std::get<4>(setting);    // int
+    
+    std::string experiment_run_name = "";
+    experiment_run_name += "EXP_";
+    experiment_run_name += std::to_string(experiment_type_idx);
+    experiment_run_name += "_";
+    experiment_run_name += experiment_name;
+    experiment_run_name += "RUN_";
+    experiment_run_name += std::to_string(run_idx);
+    const std::string logs_path{std::string{LOGS_PATH} + experiment_run_name};
+    const std::string models_path{std::string{MODELS_PATH} + experiment_run_name};
 
     // Device
     auto cuda_available = torch::cuda::is_available();
@@ -41,16 +52,6 @@ auto training_time = util::unix_time();
 #endif
     torch::cuda::manual_seed(seed_cuda + run_idx);
     torch::cuda::manual_seed_all(seed_cuda + run_idx);  
-    
-    std::string experiment_run_name = "";
-    experiment_run_name += "EXP_";
-    experiment_run_name += std::to_string(experiment_type_idx);
-    experiment_run_name += "_";
-    experiment_run_name += experiment_name;
-    experiment_run_name += "RUN_";
-    experiment_run_name += std::to_string(run_idx);
-    const std::string logs_path{std::string{LOGS_PATH} + experiment_run_name};
-    const std::string models_path{std::string{MODELS_PATH} + experiment_run_name};
     
     // Imagenette dataset
     auto train_dataset = augumentation::augumented_dataset(
@@ -106,37 +107,56 @@ auto training_time = util::unix_time();
     // Set floating point output precision
     std::cout << std::fixed << std::setprecision(4);
     
-    std::cout << "Training....\n";
+    fmt::print("Training....\n");
 
-    // Train the model
     for (size_t epoch = 0; epoch != num_epochs; ++epoch) {
+#ifdef MEASURE_TIME
+        int64_t time = util::unix_time();
+#endif
         // Train the model
         model->train();
-
         // Initialize running metrics
         double running_loss = 0.0;
         size_t num_correct = 0;
 
         for (auto& batch : *train_loader) {
+#ifdef MEASURE_TIME
+            int64_t batch_time = util::unix_time();
+#endif
             // Transfer images and target labels to device
-            auto data = batch.data.to(device);
             auto target = batch.target.to(device);
-
+#ifdef MEASURE_TIME
+            fmt::print("\ttarget_to_device_time: {} ms\n", util::unix_time() - batch_time);
+#endif
+            auto data = batch.data.to(device);
+#ifdef MEASURE_TIME
+            fmt::print("\tdata_to_device_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             // Forward pass
             auto output = model->forward(data);
-
+#ifdef MEASURE_TIME
+            fmt::print("\tforward_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             // Calculate loss
             auto loss = torch::nn::functional::cross_entropy(output, target);
-
+#ifdef MEASURE_TIME
+            fmt::print("\tentropy_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             // Update running loss
-            running_loss += loss.item<double>() * data.size(0);
-
+            running_loss += loss.item<double>() * batch.data.size(0);
+#ifdef MEASURE_TIME
+            fmt::print("\trunning_loss_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             // Calculate prediction
             auto prediction = output.argmax(1);
-
+#ifdef MEASURE_TIME
+            fmt::print("\targmax_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             // Update number of correctly classified samples
             num_correct += prediction.eq(target).sum().item<int64_t>();
-
+#ifdef MEASURE_TIME
+            fmt::print("\tsum_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             // Regularize
             if (regularization_type != regularization::regularization_type::none) {
                 for (const auto &param : model->parameters()) {
@@ -146,17 +166,30 @@ auto training_time = util::unix_time();
                                                 : param.pow(2))
                             .sum();
                 }
+#ifdef MEASURE_TIME
+                fmt::print("\tregularization_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             }
-
             // Backward pass and optimize
             optimizer.zero_grad();
+#ifdef MEASURE_TIME
+            fmt::print("\tzero_grad_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             loss.backward();
+#ifdef MEASURE_TIME
+            fmt::print("\tbackward_time: {} ms\n", util::unix_time() - batch_time);
+#endif
             optimizer.step();
+#ifdef MEASURE_TIME
+            fmt::print("\tstep_time: {} ms\n\n", util::unix_time() - batch_time);
+#endif
         } // batch loop
         // scheduler.set_epoch(epoch);
         auto train_mean_loss = running_loss / num_train_samples;
         auto train_accuracy = static_cast<double>(num_correct) / num_train_samples;
-
+#ifdef MEASURE_TIME
+        fmt::print("batches_time: {} ms\n", util::unix_time() - time);
+#endif
         // <> Test the model
         model->eval();
         running_loss = 0.0;
@@ -173,27 +206,34 @@ auto training_time = util::unix_time();
             auto prediction = output.argmax(1);
             num_correct += prediction.eq(target).sum().item<int64_t>();
         }
+#ifdef MEASURE_TIME
+        fmt::print("eval_time: {} ms\n", util::unix_time() - time);
+#endif
         // </> Test the model
         
-         double test_mean_loss = running_loss / num_test_samples;
-         double test_accuracy = static_cast<double>(num_correct) / num_test_samples;
+        double test_mean_loss = running_loss / num_test_samples;
+        double test_accuracy = static_cast<double>(num_correct) / num_test_samples;
         
-         fmt::print("Epoch [{}/{}], Trainset - Loss: {}, train_accuracy: {}, Testset - Loss: {}, test_accuracy: {}, lr: {}",
+        fmt::print("Epoch [{}/{}], Trainset - Loss: {:0.4f}, train_accuracy: {:0.4f}, {}",
+            "Testset - Loss: {:0.4f}, test_accuracy: {:0.4f}, lr: {:0.6f}\n",
             epoch + 1, num_epochs, train_mean_loss, train_accuracy, test_mean_loss, test_accuracy, current_lr);
         g_logger_training.log(epoch, train_mean_loss, train_accuracy, test_mean_loss, test_accuracy);
         
         if (test_accuracy > best_accuracy) {
             best_accuracy = test_accuracy;
-            std::cout << "Epoch " << (epoch+1) << " is the best so far! Saving to file...";
+            fmt::print("Epoch {} is the best so far! Saving to file...\n", (epoch+1));
             torch::serialize::OutputArchive archive;
             model->save(archive);
             archive.save_to(models_path);
-            std::cout << "Epoch " << (epoch+1) << " saved!" << std::endl << std::flush;
+            fmt::print("Epoch {} saved!\n", (epoch+1));
         }
         scheduler.step();
         if ((epoch+1) % learning_rate_decay_step == 0) {
             current_lr *= learning_rate_multiplayer;
         }
+#ifdef MEASURE_TIME
+        fmt::print("saving_model_time: {} ms\n", util::unix_time() - time);
+#endif
     } // epoch loop
     
     //<> Load best model for evaluation
@@ -201,8 +241,7 @@ auto training_time = util::unix_time();
     torch::serialize::InputArchive archive;
     archive.load_from(models_path);
     model->load(archive);
-    
-    std::cout << "Best model initial test...\n";
+    fmt::print("Best model initial test...\n");
     
     model->eval();
     torch::InferenceMode no_grad;
@@ -228,7 +267,7 @@ auto training_time = util::unix_time();
     
     //<\> Load best model for evaluation
     
-    std::cout << "Best Loss: " << test_mean_loss << ", Best_train_accuracy: " << test_accuracy << '\n';
+    fmt::print("Best Loss: {:0.6f}, Best_test_accuracy: {:0.6f}\n", test_mean_loss, test_accuracy);
     util::CSVLogger g_logger_testing((logs_path + "_test") + ".csv", "test_loss", "test_accuracy");
     g_logger_testing.log(test_mean_loss, test_accuracy);
     

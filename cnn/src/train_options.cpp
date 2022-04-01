@@ -7,10 +7,10 @@ std::vector<SimulationSetting> prepare_settings() {
     augumentation::augumentation_type augumentation_type;
     std::vector<SimulationSetting> settings;
 
-    int experiment_type_idx = 7;
+    int experiment_type_idx = 12;
     std::vector<std::string> experiment_name{7, ""};
     fmt::print("\nfiles that are gonna be created:\n");
-    for (int reg_type_idx = 0; reg_type_idx < 3; ++reg_type_idx) {
+    for (int reg_type_idx = 0; reg_type_idx < 1; ++reg_type_idx) {
         experiment_name.at(0) = "REG_";
         switch (reg_type_idx) {
         case 0:
@@ -26,7 +26,7 @@ std::vector<SimulationSetting> prepare_settings() {
             experiment_name.at(1) = "l2_";
             break;
         }
-        for (int reg_lambda_idx = 0; reg_lambda_idx < 2; ++reg_lambda_idx) {
+        for (int reg_lambda_idx = 0; reg_lambda_idx < 1; ++reg_lambda_idx) {
             experiment_name.at(2) = "REGLAM_";
             switch (reg_lambda_idx) {
             case 0:
@@ -42,7 +42,7 @@ std::vector<SimulationSetting> prepare_settings() {
                 experiment_name.at(3) = "none_";
                 if (reg_lambda_idx > 0) { continue; }
             }
-            for (int aug_type_idx = 0; aug_type_idx < 1; ++aug_type_idx) {
+            for (int aug_type_idx = 0; aug_type_idx < 4; ++aug_type_idx) {
                 experiment_name.at(4) = "AUG_";
                 switch (aug_type_idx) {
                 case 0:
@@ -54,17 +54,17 @@ std::vector<SimulationSetting> prepare_settings() {
                     experiment_name.at(5) = "flips_";
                     break;
                 case 2:
-                    continue;
-                    augumentation_type = augumentation::augumentation_type::rotations;
-                    experiment_name.at(5) = "rotations_";
-                    break;
-                case 3:
                     augumentation_type = augumentation::augumentation_type::crops;
                     experiment_name.at(5) = "crops_";
                     break;
-                case 4:
+                case 3:
                     augumentation_type = augumentation::augumentation_type::mixup;
                     experiment_name.at(5) = "mixup_";
+                    break;
+                case 4:
+                    continue;
+                    augumentation_type = augumentation::augumentation_type::rotations;
+                    experiment_name.at(5) = "rotations_";
                     break;
                 }
                 // if (((regularization_type == regularization::regularization_type::l1

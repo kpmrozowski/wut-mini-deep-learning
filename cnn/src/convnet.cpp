@@ -1,5 +1,5 @@
 // Copyright 2020-present pytorch-cpp Authors
-#include "convnet.h"
+#include <convnet.h>
 #include <torch/torch.h>
 
 ConvNetImpl::ConvNetImpl(int64_t num_classes)
@@ -46,4 +46,29 @@ torch::Tensor ConvNetImpl::forward(torch::Tensor x) {
     x = x.view({-1,  256 * 4 * 4});
     x = fc1->forward(x);
     return fc2->forward(x);
+}
+
+void ConvNetImpl::print_modules() {
+    auto modules = this->modules();
+    long params_size = 0;
+    for (auto module : modules) {
+        module->pretty_print(std::cout);
+        std::cout << std::endl;
+        auto dict = module->named_parameters(false);
+        for (auto record : dict) {
+            auto name = record.key();
+            auto param = record.value();
+            long module_size = 1;
+            std::cout << name << ":\tdim=(";
+            for (long size : param.sizes()) {
+                module_size *= size;
+                std::cout << size << ",";
+            }
+            std::cout << "), so module parameters count is " << module_size << std::endl;
+            params_size += module_size;
+            // std::cout << "NAME:\t" << name << "\nPARAMETERS:\n" << param << std::endl << std::endl;
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "all parameters count is " << params_size << std::endl;
 }

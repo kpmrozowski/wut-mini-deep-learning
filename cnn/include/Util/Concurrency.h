@@ -16,7 +16,7 @@ class join_threads {
    bool joined_earlier = false;
    
    void join_all() {
-      fmt::print("join_all: m_workers_up={}", m_workers_up);
+      fmt::print("join_all: m_workers_up={}\n", m_workers_up);
       for (unsigned long i = 0; i < threads.size(); ++i) {
          while (true) {
             if (threads[i].joinable()){
@@ -24,10 +24,10 @@ class join_threads {
                break;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            fmt::print("join_all: m_workers_up={}", m_workers_up);
+            fmt::print("join_all: m_workers_up={}\n", m_workers_up);
          }
       }
-      fmt::print("client_threads all threads joined!");
+      fmt::print("client_threads all threads joined!\n");
    }
  public:
    explicit join_threads(std::vector<std::thread> &threads_, std::atomic<int>& workers_up)
@@ -53,21 +53,24 @@ class client_threads {
  public:
    std::string imagenette_data_path;
    SimulationSetting setting;
-   client_threads(unsigned cpus_count, SimulationSetting s, std::string data_path = CIFAR_PATH)
+   client_threads(unsigned gpus_count, SimulationSetting s, std::string data_path = CIFAR_PATH)
        : m_done(false)
        , m_joiner(m_threads, m_workers_up)
        , imagenette_data_path(data_path)
        , setting(s)
    {
 #ifdef WITH_CUDA
-      if (cpus_count == 0)
-         cpus_count = Eden_resources::get_cpus_count();
+      if (gpus_count == 0)
+         gpus_count = Eden_resources::get_gpus_count();
 #endif
-      fmt::print("creating {} client threads", cpus_count);
+      if (gpus_count == 0){
+         fmt::print("gpus_count=0, so... ");
+         gpus_count = 1;
+      }
+      fmt::print("creating {} client threads\n", gpus_count);
       try {
-         for (unsigned i = 0; i < cpus_count; ++i) {
+         for (unsigned i = 0; i < gpus_count; ++i) {
             m_threads.push_back(std::thread(&client_threads::client_work, this, i));
-            fmt::print("83");
             // m_threads[i].detach();
          }
       } catch (...) {
@@ -77,7 +80,7 @@ class client_threads {
    }
    ~client_threads() {
       m_done = true;
-      fmt::print("client_threads destroyed!");
+      fmt::print("client_threads destroyed!\n");
    }
    void join_clients() {
       m_joiner.join_earlier();

@@ -14,6 +14,8 @@ class ConvNetImpl : public torch::nn::Module {
     explicit ConvNetImpl(int64_t num_classes = 10);
     torch::Tensor forward(torch::Tensor x);
 
+    void print_modules();
+
  private:
     torch::nn::Sequential layer01{
         torch::nn::Conv2d(torch::nn::Conv2dOptions(3, 16, 3).stride(1)),
