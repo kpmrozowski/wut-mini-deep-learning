@@ -11,7 +11,7 @@ namespace augumentation {
     enum class augumentation_type {
         none,
         flips,
-        rotations,
+        colors,
         crops,
         mixup
     };
@@ -38,9 +38,13 @@ namespace augumentation {
                     return { image_manip::flip_y(image_manip::flip_x(inner_case.data)), inner_case.target };
                 } 
             }
-            case augumentation_type::rotations: {
-                auto inner_case = inner.get(index / 5);
-                return { image_manip::rotate(inner_case.data, rng_int(index, 359)), inner_case.target };
+            case augumentation_type::colors: {
+                auto inner_case = inner.get(index / 7);
+                auto att = index % 7;
+                if ((att % 2) == 1) { inner_case.data = image_manip::decolor(inner_case.data, 0); }
+                if ((att / 2 % 2) == 1) { inner_case.data = image_manip::decolor(inner_case.data, 1); }
+                if ((att / 4 % 2) == 1) { inner_case.data = image_manip::decolor(inner_case.data, 2); }
+                return inner_case;
             }
             case augumentation_type::crops: {
                 auto inner_case = inner.get(index / 5);
@@ -73,8 +77,8 @@ namespace augumentation {
                 return *inner.size();
             case augumentation_type::flips:
                 return *inner.size() * 4;
-            case augumentation_type::rotations:
-                return *inner.size() * 5;
+            case augumentation_type::colors:
+                return *inner.size() * 7;
             case augumentation_type::crops:
                 return *inner.size() * 5;
             case augumentation_type::mixup:

@@ -36,14 +36,8 @@ namespace image_manip {
         return in.flip({2});
     }
 
-    torch::Tensor rotate(torch::Tensor in, float angle) {
-        auto in_cv = torch_to_cv(in);
-        cv::Mat out_cv;
-        int mid_x = in_cv.cols / 2.0;
-        int mid_y = in_cv.rows / 2.0;
-        auto mat = cv::getRotationMatrix2D(cv::Point2f(mid_x, mid_y), angle, 1.0);
-        cv::warpAffine(in_cv, out_cv, mat, in_cv.size());
-        return cv_to_torch(out_cv);
+    torch::Tensor decolor(torch::Tensor in, int channel) {
+        return in.index_put_({channel}, 0.5f);
     }
 
     torch::Tensor crop(torch::Tensor in, int x0, int x1, int y0, int y1) {
