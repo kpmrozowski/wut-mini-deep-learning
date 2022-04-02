@@ -214,8 +214,7 @@ void client_threads::client_work(int run_idx)
         double test_mean_loss = running_loss / num_test_samples;
         double test_accuracy = static_cast<double>(num_correct) / num_test_samples;
         
-        fmt::print("Epoch [{}/{}], Trainset - Loss: {:0.4f}, train_accuracy: {:0.4f}, {}",
-            "Testset - Loss: {:0.4f}, test_accuracy: {:0.4f}, lr: {:0.6f}\n",
+        fmt::print("Epoch [{}/{}], Trainset - Loss: {:0.4f}, train_accuracy: {:0.4f}, Testset - Loss: {:0.4f}, test_accuracy: {:0.4f}, lr: {:0.6f}\n",
             epoch + 1, num_epochs, train_mean_loss, train_accuracy, test_mean_loss, test_accuracy, current_lr);
         g_logger_training.log(epoch, train_mean_loss, train_accuracy, test_mean_loss, test_accuracy);
         
