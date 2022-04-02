@@ -4,6 +4,7 @@ project(cnn VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 option(WITH_CUDA "should be built for CUDA" ON)
 option(MEASURE_TIME "measure time too?" OFF)
+option(ON_EDEN "prepare for eden?" ON)
 
 if (${WITH_CUDA})
     include_directories(/usr/local/cuda/targets/x86_64-linux/include)
@@ -28,6 +29,10 @@ endif()
 
 if(${MEASURE_TIME})
     add_definitions(-DMEASURE_TIME)
+endif()
+
+if(${ON_EDEN})
+    add_definitions(-DON_EDEN)
 endif()
 
 find_package(Torch REQUIRED)

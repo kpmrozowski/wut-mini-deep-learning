@@ -1,28 +1,65 @@
 // Copyright 2020-present pytorch-cpp Authors
 #include <convnet.h>
+#include <torch/nn/modules/activation.h>
+#include <torch/nn/modules/linear.h>
 #include <torch/torch.h>
 
+torch::nn::Sequential ConvNetImpl::layer01{
+    torch::nn::Conv2d(torch::nn::Conv2dOptions(3, 16, 3).stride(1).bias(false)),
+    torch::nn::BatchNorm2d(16),
+    torch::nn::ReLU()
+};
+
+torch::nn::Sequential ConvNetImpl::layer02{
+    torch::nn::Conv2d(torch::nn::Conv2dOptions(16, 32, 3).stride(1).bias(false)),
+    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
+    torch::nn::BatchNorm2d(32),
+    torch::nn::ReLU()
+};
+
+torch::nn::Sequential ConvNetImpl::layer03{
+    torch::nn::Conv2d(torch::nn::Conv2dOptions(32, 64, 3).stride(1).bias(false)),
+    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
+    torch::nn::BatchNorm2d(64),
+    torch::nn::ReLU(),
+    torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
+};
+
+torch::nn::Sequential ConvNetImpl::layer04{
+    torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 128, 3).stride(1).bias(false)),
+    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
+    torch::nn::BatchNorm2d(128),
+    torch::nn::ReLU(),
+    torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
+};
+
+torch::nn::Sequential ConvNetImpl::layer05{
+    torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 256, 3).stride(1).bias(false)),
+    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
+    torch::nn::BatchNorm2d(256),
+    torch::nn::ReLU()
+};
+
+torch::nn::AdaptiveAvgPool2d ConvNetImpl::pool{torch::nn::AdaptiveAvgPool2dOptions({4, 4})};
+
+torch::nn::Sequential ConvNetImpl::layer06{
+    torch::nn::Flatten(),
+    torch::nn::Linear(256 * 4 * 4, 128),
+    torch::nn::Dropout(torch::nn::DropoutOptions(0.2)),
+    torch::nn::Sigmoid()
+};
+
+
 ConvNetImpl::ConvNetImpl(int64_t num_classes)
-    : fc1(256 * 4 * 4, 128), fc2(128, num_classes) {
+    : fc(128, num_classes) {
     register_module("layer010", layer01);
     register_module("layer020", layer02);
     register_module("layer030", layer03);
     register_module("layer040", layer04);
     register_module("layer050", layer05);
-   //  register_module("layer051", layer05);
-   //  register_module("layer060", layer06);
-   //  register_module("layer070", layer07);
-   //  register_module("layer071", layer07);
-   //  register_module("layer072", layer07);
-   //  register_module("layer080", layer08);
-   //  register_module("layer090", layer09);
-   //  register_module("layer091", layer09);
-   //  register_module("layer092", layer09);
-   //  register_module("layer100", layer10);
-   //  register_module("layer110", layer11);
     register_module("pool", pool),
-    register_module("fc1", fc1);
-    register_module("fc2", fc2);
+    register_module("layer060", layer06);
+    register_module("fc", fc);
 }
 
 torch::Tensor ConvNetImpl::forward(torch::Tensor x) {
@@ -31,21 +68,10 @@ torch::Tensor ConvNetImpl::forward(torch::Tensor x) {
     x = layer03->forward(x);
     x = layer04->forward(x);
     x = layer05->forward(x);
-   //  x = layer05->forward(x);
-   //  x = layer06->forward(x);
-   //  x = layer07->forward(x);
-   //  x = layer07->forward(x);
-   //  x = layer07->forward(x);
-   //  x = layer08->forward(x);
-   //  x = layer09->forward(x);
-   //  x = layer09->forward(x);
-   //  x = layer09->forward(x);
-   //  x = layer10->forward(x);
-   //  x = layer11->forward(x);
     x = pool->forward(x);
     x = x.view({-1,  256 * 4 * 4});
-    x = fc1->forward(x);
-    return fc2->forward(x);
+    x = layer06->forward(x);
+    return fc->forward(x);
 }
 
 void ConvNetImpl::print_modules() {

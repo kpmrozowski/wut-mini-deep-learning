@@ -7,7 +7,7 @@ std::vector<SimulationSetting> prepare_settings() {
     augumentation::augumentation_type augumentation_type;
     std::vector<SimulationSetting> settings;
 
-    int experiment_type_idx = 12;
+    int experiment_type_idx = 15;
     std::vector<std::string> experiment_name{7, ""};
     fmt::print("\nfiles that are gonna be created:\n");
     for (int reg_type_idx = 0; reg_type_idx < 1; ++reg_type_idx) {
@@ -42,7 +42,7 @@ std::vector<SimulationSetting> prepare_settings() {
                 experiment_name.at(3) = "none_";
                 if (reg_lambda_idx > 0) { continue; }
             }
-            for (int aug_type_idx = 0; aug_type_idx < 4; ++aug_type_idx) {
+            for (int aug_type_idx = 2; aug_type_idx < 4; ++aug_type_idx) {
                 experiment_name.at(4) = "AUG_";
                 switch (aug_type_idx) {
                 case 0:

@@ -3,11 +3,18 @@
 #include<tuple>
 #include "augumentation.h"
 
-#define CIFAR_PATH "/raid/cifar-10/"
-// #define LOGS_PATH "/raid/wut-mini-deep-learning/cnn/logs/"
-// #define MODELS_PATH "/raid/wut-mini-deep-learning/cnn/models/"
-#define LOGS_PATH "/workspace/wut-mini-deep-learning/cnn/logs/"
-#define MODELS_PATH "/workspace/wut-mini-deep-learning/cnn/models/"
+#ifndef ON_EDEN
+   #define CIFAR_PATH "/workspace/cifar-10/"
+   #define LOGS_PATH "/workspace/wut-mini-deep-learning/cnn/logs/"
+   #define MODELS_PATH "/workspace/wut-mini-deep-learning/cnn/models/"
+#else
+   // #define CIFAR_PATH "/raid/cifar-10/"
+   // #define LOGS_PATH "/raid/wut-mini-deep-learning/cnn/logs/"
+   // #define MODELS_PATH "/raid/wut-mini-deep-learning/cnn/models/"
+   #define CIFAR_PATH "/shm/cifar-10/"
+   #define LOGS_PATH "/shm/wut-mini-deep-learning/cnn/logs/"
+   #define MODELS_PATH "/shm/wut-mini-deep-learning/cnn/models/"
+#endif
 
 namespace regularization {
 

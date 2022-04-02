@@ -17,90 +17,14 @@ class ConvNetImpl : public torch::nn::Module {
     void print_modules();
 
  private:
-    torch::nn::Sequential layer01{
-        torch::nn::Conv2d(torch::nn::Conv2dOptions(3, 16, 3).stride(1).bias(false)),
-        torch::nn::BatchNorm2d(16),
-        torch::nn::ReLU(),
-        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
-    };
-
-    torch::nn::Sequential layer02{
-        torch::nn::Conv2d(torch::nn::Conv2dOptions(16, 32, 3).stride(1).bias(false)),
-        torch::nn::BatchNorm2d(32),
-        torch::nn::ReLU(),
-        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2)),
-        torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2))
-    };
-
-    torch::nn::Sequential layer03{
-        torch::nn::Conv2d(torch::nn::Conv2dOptions(32, 64, 3).stride(1).bias(false)),
-        torch::nn::BatchNorm2d(64),
-        torch::nn::ReLU(),
-        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2)),
-        torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2))
-    };
-
-    torch::nn::Sequential layer04{
-        torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 128, 3).stride(1).bias(false)),
-        torch::nn::BatchNorm2d(128),
-        torch::nn::ReLU(),
-        torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2)),
-        torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2))
-    };
-
-    torch::nn::Sequential layer05{
-        torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 256, 3).stride(1).bias(false)),
-        torch::nn::BatchNorm2d(256),
-        torch::nn::ReLU(),
-    };
-
-   //  torch::nn::Sequential layer06{
-   //      torch::nn::Conv2d(torch::nn::Conv2dOptions(32, 64, 3).stride(1).bias(false)),
-   //      torch::nn::Dropout2d(0.2),
-   //      torch::nn::Dropout2d(0.2),
-   //      torch::nn::BatchNorm2d(64),
-   //      torch::nn::ReLU(),
-   //  };
-
-   //  torch::nn::Sequential layer07{ // x3
-   //      torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 64, 3).stride(1).bias(false)),
-   //      torch::nn::Dropout2d(0.2),
-   //      torch::nn::BatchNorm2d(64),
-   //      torch::nn::ReLU(),
-   //  };
-
-   //  torch::nn::Sequential layer08{
-   //      torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 128, 3).stride(1).bias(false)),
-   //      torch::nn::Dropout2d(0.2),
-   //      torch::nn::BatchNorm2d(128),
-   //      torch::nn::ReLU(),
-   //  };
-
-   //  torch::nn::Sequential layer09{ // x3
-   //      torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 128, 3).stride(1).bias(false)),
-   //      torch::nn::Dropout2d(0.2),
-   //      torch::nn::BatchNorm2d(128),
-   //      torch::nn::ReLU(),
-   //  };
-
-   //  torch::nn::Sequential layer10{
-   //      torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 256, 3).stride(1).bias(false)),
-   //      torch::nn::Dropout2d(0.2),
-   //      torch::nn::BatchNorm2d(256),
-   //      torch::nn::ReLU(),
-   //  };
-
-   //  torch::nn::Sequential layer11{
-   //      torch::nn::Conv2d(torch::nn::Conv2dOptions(256, 64, 3).stride(1).bias(false)),
-   //      torch::nn::Dropout2d(0.2),
-   //      torch::nn::BatchNorm2d(64),
-   //      torch::nn::ReLU(),
-   //  };
-
-    torch::nn::AdaptiveAvgPool2d pool{torch::nn::AdaptiveAvgPool2dOptions({4, 4})};
-
-    torch::nn::Linear fc1;
-    torch::nn::Linear fc2;
+    static torch::nn::Sequential layer01;
+    static torch::nn::Sequential layer02;
+    static torch::nn::Sequential layer03;
+    static torch::nn::Sequential layer04;
+    static torch::nn::Sequential layer05;
+    static torch::nn::AdaptiveAvgPool2d pool;
+    static torch::nn::Sequential layer06;
+    torch::nn::Linear fc;
 };
 
 TORCH_MODULE(ConvNet);

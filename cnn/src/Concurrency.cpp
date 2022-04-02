@@ -18,14 +18,20 @@ void client_threads::client_work(int run_idx)
 #endif
     // Hyper parameters
     const int64_t num_classes = 10;
-    const int64_t batch_size = 256;//4048=39GB;
-    const int64_t data_workers = 8;
-    const size_t num_epochs = 5;
+#ifndef ON_EDEN
+    const int64_t batch_size = 256;
+#else
+    const int64_t batch_size = 4048;//=39GB;
+#endif
+    const int64_t data_workers = 1;
+    const size_t num_epochs = 200;
     const double learning_rate = 4e-3;
     const double learning_rate_multiplayer = 0.83;
     const uint learning_rate_decay_step = 10;
     const double weight_decay = 1e-3;
     const uint64_t seed_cuda = 123;
+    const uint64_t img_width = 32;
+    const uint64_t img_height = 32;
 
     auto regularization_type = std::get<0>(setting);    // regularization::regularization_type
     auto regularization_lambda = std::get<1>(setting);  // double 
@@ -60,7 +66,7 @@ void client_threads::client_work(int run_idx)
         dataset::ImageFolderDataset(
             imagenette_data_path, 
             dataset::ImageFolderDataset::Mode::TRAIN,
-            {160, 160}),
+            {img_height, img_width}),
             augumentation_type)
         .map(torch::data::transforms::Normalize<>({0.485, 0.456, 0.406}, {0.229, 0.224, 0.225}))
         .map(torch::data::transforms::Stack<>());
@@ -72,7 +78,7 @@ void client_threads::client_work(int run_idx)
         dataset::ImageFolderDataset(
             imagenette_data_path,
             dataset::ImageFolderDataset::Mode::VAL,
-            {160, 160})
+            {img_height, img_width})
         .map(torch::data::transforms::Normalize<>({0.485, 0.456, 0.406}, {0.229, 0.224, 0.225}))
         .map(torch::data::transforms::Stack<>());
     
@@ -126,11 +132,11 @@ void client_threads::client_work(int run_idx)
             int64_t batch_time = util::unix_time();
 #endif
             // Transfer images and target labels to device
-            auto target = batch.target.to(device);
+            auto target = batch.target.to(device, true);
 #ifdef MEASURE_TIME
             fmt::print("\ttarget_to_device_time: {} ms\n", util::unix_time() - batch_time);
 #endif
-            auto data = batch.data.to(device);
+            auto data = batch.data.to(device, true);
 #ifdef MEASURE_TIME
             fmt::print("\tdata_to_device_time: {} ms\n", util::unix_time() - batch_time);
 #endif
