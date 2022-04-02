@@ -46,10 +46,10 @@ namespace augumentation {
                 auto inner_case = inner.get(index / 5);
                 auto w = inner_case.data.sizes()[1];
                 auto h = inner_case.data.sizes()[2];
-                auto x0 = rng_int(index * 4 + 0, w / 2);
-                auto y0 = rng_int(index * 4 + 1, h / 2);
-                auto x1 = x0 + w / 2 + rng_int(index * 4 + 2, w - w / 2 - x0);
-                auto y1 = y0 + h / 2 + rng_int(index * 4 + 3, h - h / 2 - y0);
+                auto x0 = rng_int(index * 4 + 0, w / 10);
+                auto y0 = rng_int(index * 4 + 1, h / 10);
+                auto x1 = x0 + (w - w / 10) + rng_int(index * 4 + 2, w / 10 - x0);
+                auto y1 = y0 + (h - h / 10) + rng_int(index * 4 + 3, h / 10 - y0);
                 return { image_manip::crop(inner_case.data, x0, x1, y0, y1), inner_case.target };
             }
             case augumentation_type::mixup: {
