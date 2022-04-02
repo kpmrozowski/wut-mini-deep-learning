@@ -1,4 +1,5 @@
 #include <Util/Concurrency.h>
+#include <torch/data/dataloader_options.h>
 #include <torch/optim/schedulers/step_lr.h>
 #include <torch/torch.h>
 #include <convnet.h>
@@ -18,6 +19,7 @@ void client_threads::client_work(int run_idx)
     // Hyper parameters
     const int64_t num_classes = 10;
     const int64_t batch_size = 256;//4048=39GB;
+    const int64_t data_workers = 8;
     const size_t num_epochs = 5;
     const double learning_rate = 4e-3;
     const double learning_rate_multiplayer = 0.83;
@@ -79,10 +81,10 @@ void client_threads::client_work(int run_idx)
     
     // Data loader
     auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(
-        std::move(train_dataset), batch_size);
+        std::move(train_dataset), torch::data::DataLoaderOptions(batch_size).workers(data_workers));
     
     auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-        std::move(test_dataset), batch_size);
+        std::move(test_dataset), torch::data::DataLoaderOptions(batch_size).workers(data_workers));
     
     double best_accuracy = 0;
     double current_lr = learning_rate;
