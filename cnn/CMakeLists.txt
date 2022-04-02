@@ -38,7 +38,6 @@ endif()
 find_package(Torch REQUIRED)
 find_package(fmt REQUIRED)
 # find_package(spdlog REQUIRED)
-find_package(OpenCV REQUIRED)
 
 set(EXECUTABLE_NAME cnn)
 
@@ -60,9 +59,9 @@ target_include_directories(${EXECUTABLE_NAME} PRIVATE include)
 add_subdirectory(utils/image_io)
 
 if (${WITH_CUDA})
-target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt opencv_core opencv_imgproc opencv_imgcodecs eden_resources)
+target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt eden_resources)
 else()
-target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt opencv_core opencv_imgproc opencv_imgcodecs)
+target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt)
 endif()
 
 # External dependencies
