@@ -32,6 +32,8 @@ void client_threads::client_work(int run_idx)
     const uint64_t seed_cuda = 123;
     const uint64_t img_width = 32;
     const uint64_t img_height = 32;
+    const int aug_number = 10;
+    const bool aug_consistent = false;
 
     auto regularization_type = std::get<0>(setting);    // regularization::regularization_type
     auto regularization_lambda = std::get<1>(setting);  // double 
@@ -67,7 +69,7 @@ void client_threads::client_work(int run_idx)
             imagenette_data_path, 
             dataset::ImageFolderDataset::Mode::TRAIN,
             {img_height, img_width}),
-            augumentation_type)
+            augumentation_type, aug_number, aug_consistent)
         .map(torch::data::transforms::Normalize<>({0.485, 0.456, 0.406}, {0.229, 0.224, 0.225}))
         .map(torch::data::transforms::Stack<>());
 

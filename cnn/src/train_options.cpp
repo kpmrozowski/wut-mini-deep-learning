@@ -42,7 +42,7 @@ std::vector<SimulationSetting> prepare_settings() {
                 experiment_name.at(3) = "none_";
                 if (reg_lambda_idx > 0) { continue; }
             }
-            for (int aug_type_idx = 2; aug_type_idx < 5; ++aug_type_idx) {
+            for (int aug_type_idx = 5; aug_type_idx < 6; ++aug_type_idx) {
                 experiment_name.at(4) = "AUG_";
                 switch (aug_type_idx) {
                 case 0:
@@ -64,6 +64,10 @@ std::vector<SimulationSetting> prepare_settings() {
                 case 4:
                     augumentation_type = augumentation::augumentation_type::colors;
                     experiment_name.at(5) = "colors_";
+                    break;
+                case 5:
+                    augumentation_type = augumentation::augumentation_type::mixed;
+                    experiment_name.at(5) = "mixed_";
                     break;
                 }
                 // if (((regularization_type == regularization::regularization_type::l1
