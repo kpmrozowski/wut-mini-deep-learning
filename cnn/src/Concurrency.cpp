@@ -48,8 +48,7 @@ void with_model(int run_idx, SimulationSetting setting, std::string imagenette_d
     experiment_run_name += "EXP_";
     experiment_run_name += std::to_string(experiment_type_idx);
     experiment_run_name += "_" + experiment_name;
-    experiment_run_name += "_" + label;
-    experiment_run_name += "RUN_" + std::to_string(run_idx);
+    experiment_run_name += label;
     const std::string logs_path{std::string{LOGS_PATH} + experiment_run_name};
     const std::string models_path{std::string{MODELS_PATH} + experiment_run_name};
 
