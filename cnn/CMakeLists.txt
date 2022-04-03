@@ -44,11 +44,15 @@ set(EXECUTABLE_NAME cnn)
 add_executable(${EXECUTABLE_NAME})
 target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
                                           src/convnet.cpp
+                                          src/mlp1.cpp
+                                          src/mlpdeep.cpp
                                           src/image_manip.cpp
                                           src/imagefolder_dataset.cpp
                                           src/train_options.cpp
                                           src/Concurrency.cpp
                                           include/convnet.h
+                                          include/mlp1.h
+                                          include/mlpdeep.h
                                           include/image_manip.h
                                           include/imagefolder_dataset.h
                                           include/augumentation.h

@@ -26,7 +26,14 @@ enum class regularization_type {
 
 }
 
+enum class network_type {
+    convnet,
+    mlp1,
+    mlpdeep
+};
+
 typedef std::tuple<
+    network_type,
     regularization::regularization_type,
     double,
     augumentation::augumentation_type,

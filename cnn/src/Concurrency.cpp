@@ -3,6 +3,8 @@
 #include <torch/optim/schedulers/step_lr.h>
 #include <torch/torch.h>
 #include <convnet.h>
+#include <mlp1.h>
+#include <mlpdeep.h>
 #include <imagefolder_dataset.h>
 #include <Util/CSVLogger.h>
 #ifdef MEASURE_TIME
@@ -10,37 +12,38 @@
 #endif
 #include <train_options.h>
 
-void client_threads::client_work(int run_idx)
-{
-   at::init_num_threads();
-#ifdef MEASURE_TIME
-   auto training_time = util::unix_time();
-#endif
-    // Hyper parameters
-    const int64_t num_classes = 10;
+// Hyper parameters
+const int64_t num_classes = 10;
 #ifndef ON_EDEN
-    const int64_t batch_size = 256;
+const int64_t batch_size = 256;
 #else
-    const int64_t batch_size = 4048;//=39GB;
+const int64_t batch_size = 4048;//=39GB;
 #endif
-    const int64_t data_workers = 1;
-    const size_t num_epochs = 200;
-    const double learning_rate = 4e-3;
-    const double learning_rate_multiplayer = 0.83;
-    const uint learning_rate_decay_step = 10;
-    const double weight_decay = 1e-3;
-    const uint64_t seed_cuda = 123;
-    const uint64_t img_width = 32;
-    const uint64_t img_height = 32;
-    const int aug_number = 10;
-    const bool aug_consistent = false;
+const int64_t data_workers = 1;
+const size_t num_epochs = 200;
+const double learning_rate = 4e-3;
+const double learning_rate_multiplayer = 0.83;
+const uint learning_rate_decay_step = 10;
+const double weight_decay = 1e-3;
+const uint64_t seed_cuda = 123;
+const uint64_t img_width = 32;
+const uint64_t img_height = 32;
+const int aug_number = 10;
+const bool aug_consistent = false;
 
-    auto regularization_type = std::get<0>(setting);    // regularization::regularization_type
-    auto regularization_lambda = std::get<1>(setting);  // double 
-    auto augumentation_type = std::get<2>(setting);     // augumentation::augumentation_type
-    auto experiment_name = std::get<3>(setting);        // string
-    auto experiment_type_idx = std::get<4>(setting);    // int
-    
+template <typename M>
+void with_model(int run_idx, SimulationSetting setting, std::string imagenette_data_path, M model) {
+#ifdef MEASURE_TIME
+    auto training_time = util::unix_time();
+#endif
+
+    auto regularization_type = std::get<1>(setting);    // regularization::regularization_type
+    auto regularization_lambda = std::get<2>(setting);  // double
+    auto augumentation_type = std::get<3>(setting);     // augumentation::augumentation_type
+    auto experiment_name = std::get<4>(setting);        // string
+    auto experiment_type_idx = std::get<5>(setting);    // int
+
+
     std::string experiment_run_name = "";
     experiment_run_name += "EXP_";
     experiment_run_name += std::to_string(experiment_type_idx);
@@ -102,10 +105,8 @@ void client_threads::client_work(int run_idx)
         "train_loss", "train_accuracy", 
         "test_loss", "test_accuracy");
     
-    // Model
-    ConvNet model(num_classes);
     model->to(device);
-    
+
     // Optimizer
     torch::optim::Adam optimizer(
         model->parameters(), torch::optim::AdamOptions(learning_rate).weight_decay(weight_decay));
@@ -153,7 +154,7 @@ void client_threads::client_work(int run_idx)
             fmt::print("\tentropy_time: {} ms\n", util::unix_time() - batch_time);
 #endif
             // Update running loss
-            running_loss += loss.item<double>() * batch.data.size(0);
+            running_loss += loss.template item<double>() * batch.data.size(0);
 #ifdef MEASURE_TIME
             fmt::print("\trunning_loss_time: {} ms\n", util::unix_time() - batch_time);
 #endif
@@ -163,7 +164,7 @@ void client_threads::client_work(int run_idx)
             fmt::print("\targmax_time: {} ms\n", util::unix_time() - batch_time);
 #endif
             // Update number of correctly classified samples
-            num_correct += prediction.eq(target).sum().item<int64_t>();
+            num_correct += prediction.eq(target).sum().template item<int64_t>();
 #ifdef MEASURE_TIME
             fmt::print("\tsum_time: {} ms\n", util::unix_time() - batch_time);
 #endif
@@ -211,10 +212,10 @@ void client_threads::client_work(int run_idx)
             auto output = model->forward(data);
 
             auto loss = torch::nn::functional::cross_entropy(output, target);
-            running_loss += loss.item<double>() * data.size(0);
+            running_loss += loss.template item<double>() * data.size(0);
 
             auto prediction = output.argmax(1);
-            num_correct += prediction.eq(target).sum().item<int64_t>();
+            num_correct += prediction.eq(target).sum().template item<int64_t>();
         }
 #ifdef MEASURE_TIME
         fmt::print("eval_time: {} ms\n", util::unix_time() - time);
@@ -265,10 +266,10 @@ void client_threads::client_work(int run_idx)
         auto output = model->forward(data);
 
         auto loss = torch::nn::functional::cross_entropy(output, target);
-        running_loss += loss.item<double>() * data.size(0);
+        running_loss += loss.template item<double>() * data.size(0);
 
         auto prediction = output.argmax(1);
-        num_correct += prediction.eq(target).sum().item<int64_t>();
+        num_correct += prediction.eq(target).sum().template item<int64_t>();
     }
     
     auto test_mean_loss = running_loss / num_test_samples;
@@ -283,4 +284,23 @@ void client_threads::client_work(int run_idx)
 #ifdef MEASURE_TIME
     fmt::print("training_time={}ms\n", util::unix_time() - training_time);
 #endif
+}
+
+void client_threads::client_work(int run_idx)
+{
+    at::init_num_threads();
+    auto network_type = std::get<0>(setting);
+
+    // Model
+    switch (network_type) {
+        case network_type::convnet:
+            with_model(run_idx, setting, imagenette_data_path, ConvNet(num_classes));
+            break;
+        case network_type::mlp1:
+            with_model(run_idx, setting, imagenette_data_path, Mlp1(num_classes));
+            break;
+        case network_type::mlpdeep:
+            with_model(run_idx, setting, imagenette_data_path, MlpDeep(num_classes));
+            break;
+    }
 }
