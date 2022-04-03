@@ -45,6 +45,7 @@ class join_threads {
 
 class client_threads {
    std::atomic_bool m_done;
+   std::string m_label;
    std::vector<std::thread> m_threads;
    std::atomic<int> m_workers_up = 0;
    join_threads m_joiner;
@@ -53,8 +54,9 @@ class client_threads {
  public:
    std::string imagenette_data_path;
    SimulationSetting setting;
-   client_threads(unsigned gpus_count, SimulationSetting s, std::string data_path = CIFAR_PATH)
+   client_threads(unsigned gpus_count, SimulationSetting s, std::string label, std::string data_path = CIFAR_PATH)
        : m_done(false)
+       , m_label(label)
        , m_joiner(m_threads, m_workers_up)
        , imagenette_data_path(data_path)
        , setting(s)

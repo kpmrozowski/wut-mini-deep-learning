@@ -3,8 +3,8 @@
 #include <torch/optim/schedulers/step_lr.h>
 #include <torch/torch.h>
 #include <convnet.h>
-#include <mlp1.h>
-#include <mlpdeep.h>
+// #include <mlp1.h>
+// #include <mlpdeep.h>
 #include <imagefolder_dataset.h>
 #include <Util/CSVLogger.h>
 #ifdef MEASURE_TIME
@@ -32,7 +32,7 @@ const int aug_number = 10;
 const bool aug_consistent = false;
 
 template <typename M>
-void with_model(int run_idx, SimulationSetting setting, std::string imagenette_data_path, M model) {
+void with_model(int run_idx, SimulationSetting setting, std::string imagenette_data_path, M model, std::string label) {
 #ifdef MEASURE_TIME
     auto training_time = util::unix_time();
 #endif
@@ -47,10 +47,9 @@ void with_model(int run_idx, SimulationSetting setting, std::string imagenette_d
     std::string experiment_run_name = "";
     experiment_run_name += "EXP_";
     experiment_run_name += std::to_string(experiment_type_idx);
-    experiment_run_name += "_";
-    experiment_run_name += experiment_name;
-    experiment_run_name += "RUN_";
-    experiment_run_name += std::to_string(run_idx);
+    experiment_run_name += "_" + experiment_name;
+    experiment_run_name += "_" + label;
+    experiment_run_name += "RUN_" + std::to_string(run_idx);
     const std::string logs_path{std::string{LOGS_PATH} + experiment_run_name};
     const std::string models_path{std::string{MODELS_PATH} + experiment_run_name};
 
@@ -294,13 +293,13 @@ void client_threads::client_work(int run_idx)
     // Model
     switch (network_type) {
         case network_type::convnet:
-            with_model(run_idx, setting, imagenette_data_path, ConvNet(num_classes));
+            with_model(run_idx, setting, imagenette_data_path, ConvNet(num_classes), m_label);
             break;
-        case network_type::mlp1:
-            with_model(run_idx, setting, imagenette_data_path, Mlp1(num_classes));
-            break;
-        case network_type::mlpdeep:
-            with_model(run_idx, setting, imagenette_data_path, MlpDeep(num_classes));
-            break;
+        // case network_type::mlp1:
+        //     with_model(run_idx, setting, imagenette_data_path, Mlp1(num_classes), m_label);
+        //     break;
+        // case network_type::mlpdeep:
+        //     with_model(run_idx, setting, imagenette_data_path, MlpDeep(num_classes), m_label);
+        //     break;
     }
 }

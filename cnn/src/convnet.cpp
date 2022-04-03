@@ -4,49 +4,59 @@
 #include <torch/nn/modules/linear.h>
 #include <torch/torch.h>
 
-torch::nn::Sequential ConvNetImpl::layer01{
-    torch::nn::Conv2d(torch::nn::Conv2dOptions(3, 16, 3).stride(1).bias(false)),
-    torch::nn::BatchNorm2d(16),
-    torch::nn::ReLU()
+using torch::nn::Conv2d;
+using torch::nn::BatchNorm2d;
+using torch::nn::ReLU;
+using torch::nn::Dropout2d;
+using torch::nn::MaxPool2d;
+using torch::nn::Flatten;
+using torch::nn::Dropout;
+using torch::nn::DropoutOptions;
+// using torch::nn::Softmax;
+
+Sequential ConvNetImpl::layer01{
+    Conv2d(Conv2dOptions(3, 16, 3).stride(1).bias(false)),
+    BatchNorm2d(16),
+    ReLU()
 };
 
-torch::nn::Sequential ConvNetImpl::layer02{
-    torch::nn::Conv2d(torch::nn::Conv2dOptions(16, 32, 3).stride(1).bias(false)),
-    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
-    torch::nn::BatchNorm2d(32),
-    torch::nn::ReLU()
+Sequential ConvNetImpl::layer02{
+    Conv2d(Conv2dOptions(16, 32, 3).stride(1).bias(false)),
+    Dropout2d(Dropout2dOptions(0.2)),
+    BatchNorm2d(32),
+    ReLU()
 };
 
-torch::nn::Sequential ConvNetImpl::layer03{
-    torch::nn::Conv2d(torch::nn::Conv2dOptions(32, 64, 3).stride(1).bias(false)),
-    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
-    torch::nn::BatchNorm2d(64),
-    torch::nn::ReLU(),
-    torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
+Sequential ConvNetImpl::layer03{
+    Conv2d(Conv2dOptions(32, 64, 3).stride(1).bias(false)),
+    Dropout2d(Dropout2dOptions(0.2)),
+    BatchNorm2d(64),
+    ReLU(),
+    MaxPool2d(MaxPool2dOptions(2).stride(2))
 };
 
-torch::nn::Sequential ConvNetImpl::layer04{
-    torch::nn::Conv2d(torch::nn::Conv2dOptions(64, 128, 3).stride(1).bias(false)),
-    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
-    torch::nn::BatchNorm2d(128),
-    torch::nn::ReLU(),
-    torch::nn::MaxPool2d(torch::nn::MaxPool2dOptions(2).stride(2))
+Sequential ConvNetImpl::layer04{
+    Conv2d(Conv2dOptions(64, 128, 3).stride(1).bias(false)),
+    Dropout2d(Dropout2dOptions(0.2)),
+    BatchNorm2d(128),
+    ReLU(),
+    MaxPool2d(MaxPool2dOptions(2).stride(2))
 };
 
-torch::nn::Sequential ConvNetImpl::layer05{
-    torch::nn::Conv2d(torch::nn::Conv2dOptions(128, 256, 3).stride(1).bias(false)),
-    torch::nn::Dropout2d(torch::nn::Dropout2dOptions(0.2)),
-    torch::nn::BatchNorm2d(256),
-    torch::nn::ReLU()
+Sequential ConvNetImpl::layer05{
+    Conv2d(Conv2dOptions(128, 256, 3).stride(1).bias(false)),
+    Dropout2d(Dropout2dOptions(0.2)),
+    BatchNorm2d(256),
+    ReLU()
 };
 
-torch::nn::AdaptiveAvgPool2d ConvNetImpl::pool{torch::nn::AdaptiveAvgPool2dOptions({4, 4})};
+AdaptiveAvgPool2d ConvNetImpl::pool{AdaptiveAvgPool2dOptions({4, 4})};
 
-torch::nn::Sequential ConvNetImpl::layer06{
-    torch::nn::Flatten(),
-    torch::nn::Linear(256 * 4 * 4, 128),
-    torch::nn::Dropout(torch::nn::DropoutOptions(0.2)),
-    torch::nn::Sigmoid()
+Sequential ConvNetImpl::layer06{
+    Flatten(),
+    Linear(256 * 4 * 4, 128),
+    Dropout(DropoutOptions(0.2)),
+    ReLU()
 };
 
 
@@ -69,7 +79,7 @@ torch::Tensor ConvNetImpl::forward(torch::Tensor x) {
     x = layer04->forward(x);
     x = layer05->forward(x);
     x = pool->forward(x);
-    x = x.view({-1,  256 * 4 * 4});
+    // x = x.view({-1,  256 * 4 * 4});
     x = layer06->forward(x);
     return fc->forward(x);
 }

@@ -9,6 +9,14 @@
 #include <torch/nn/options/dropout.h>
 #include <torch/torch.h>
 
+using torch::nn::Sequential;
+using torch::nn::Conv2dOptions;
+using torch::nn::Dropout2dOptions;
+using torch::nn::MaxPool2dOptions;
+using torch::nn::AdaptiveAvgPool2d;
+using torch::nn::AdaptiveAvgPool2dOptions;
+using torch::nn::Linear;
+
 class ConvNetImpl : public torch::nn::Module {
  public:
     explicit ConvNetImpl(int64_t num_classes = 10);
@@ -17,14 +25,14 @@ class ConvNetImpl : public torch::nn::Module {
     void print_modules();
 
  private:
-    static torch::nn::Sequential layer01;
-    static torch::nn::Sequential layer02;
-    static torch::nn::Sequential layer03;
-    static torch::nn::Sequential layer04;
-    static torch::nn::Sequential layer05;
-    static torch::nn::AdaptiveAvgPool2d pool;
-    static torch::nn::Sequential layer06;
-    torch::nn::Linear fc;
+    static Sequential layer01;
+    static Sequential layer02;
+    static Sequential layer03;
+    static Sequential layer04;
+    static Sequential layer05;
+    static AdaptiveAvgPool2d pool;
+    static Sequential layer06;
+    Linear fc;
 };
 
 TORCH_MODULE(ConvNet);

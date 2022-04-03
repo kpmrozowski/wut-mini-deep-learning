@@ -11,6 +11,7 @@
 
 class Mlp1Impl : public torch::nn::Module {
  public:
+    Mlp1Impl() = delete;
     explicit Mlp1Impl(int64_t num_classes = 10);
     torch::Tensor forward(torch::Tensor x);
 

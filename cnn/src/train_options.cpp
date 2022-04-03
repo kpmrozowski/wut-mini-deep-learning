@@ -8,10 +8,10 @@ std::vector<SimulationSetting> prepare_settings() {
     augumentation::augumentation_type augumentation_type;
     std::vector<SimulationSetting> settings;
 
-    int experiment_type_idx = 15;
+    int experiment_type_idx = 26;
     std::vector<std::string> experiment_name{7, ""};
     fmt::print("\nfiles that are gonna be created:\n");
-    for (int net_type_idx = 0; net_type_idx < 3; ++net_type_idx) {
+    for (int net_type_idx = 0; net_type_idx < 1; ++net_type_idx) {
         switch (net_type_idx) {
         case 0:
             network_type = network_type::convnet;
@@ -19,7 +19,6 @@ std::vector<SimulationSetting> prepare_settings() {
             break;
         case 1:
             network_type = network_type::mlp1;
-            // Too lazy
             experiment_name.at(0) = "MLP1_REG_";
             break;
         case 2:
@@ -57,7 +56,7 @@ std::vector<SimulationSetting> prepare_settings() {
                 if (regularization_type == regularization::regularization_type::none) {
                     experiment_name.at(3) = "none_";
                 }
-                for (int aug_type_idx = 5; aug_type_idx < 6; ++aug_type_idx) {
+                for (int aug_type_idx = 0; aug_type_idx < 3; ++aug_type_idx) {
                     experiment_name.at(4) = "AUG_";
                     switch (aug_type_idx) { // Also this
                     case 0:
@@ -65,20 +64,20 @@ std::vector<SimulationSetting> prepare_settings() {
                         experiment_name.at(5) = "none_";
                         break;
                     case 1:
-                        augumentation_type = augumentation::augumentation_type::flips;
-                        experiment_name.at(5) = "flips_";
-                        break;
-                    case 2:
                         augumentation_type = augumentation::augumentation_type::crops;
                         experiment_name.at(5) = "crops_";
                         break;
-                    case 3:
-                        augumentation_type = augumentation::augumentation_type::mixup;
-                        experiment_name.at(5) = "mixup_";
-                        break;
-                    case 4:
+                    case 2:
                         augumentation_type = augumentation::augumentation_type::colors;
                         experiment_name.at(5) = "colors_";
+                        break;
+                    case 3:
+                        augumentation_type = augumentation::augumentation_type::flips;
+                        experiment_name.at(5) = "flips_";
+                        break;
+                    case 4:
+                        augumentation_type = augumentation::augumentation_type::mixup;
+                        experiment_name.at(5) = "mixup_";
                         break;
                     case 5:
                         augumentation_type = augumentation::augumentation_type::mixed;

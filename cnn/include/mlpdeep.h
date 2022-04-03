@@ -10,6 +10,7 @@
 
 class MlpDeepImpl : public torch::nn::Module {
  public:
+    MlpDeepImpl() = delete;
     explicit MlpDeepImpl(int64_t num_classes = 10);
     torch::Tensor forward(torch::Tensor x);
 

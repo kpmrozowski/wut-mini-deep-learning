@@ -51,8 +51,8 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
                                           src/train_options.cpp
                                           src/Concurrency.cpp
                                           include/convnet.h
-                                          include/mlp1.h
-                                          include/mlpdeep.h
+                                          # include/mlp1.h
+                                          # include/mlpdeep.h
                                           include/image_manip.h
                                           include/imagefolder_dataset.h
                                           include/augumentation.h

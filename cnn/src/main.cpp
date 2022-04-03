@@ -1,3 +1,4 @@
+#include <string>
 #include <train_options.h>
 #include <Util/Concurrency.h>
 #ifdef WITH_CUDA
@@ -21,9 +22,23 @@ int main(int argc, char **argv) {
 #else
         unsigned num_gpus = 1;
 #endif
-        std::string cifar_path{argc > 1 ? argv[1] : CIFAR_PATH};
+        std::string label{argc > 1 ? argv[1] : ""};
+        std::map<std::string, int> label_to_idx{
+            {"airplane", 0},
+            {"automobile", 1},
+            {"bird", 2},
+            {"cat", 3},
+            {"deer", 4},
+            {"dog", 5},
+            {"frog", 6},
+            {"horse", 7},
+            {"ship", 8},
+            {"truck", 9},
+        };
+        std::string cifar_path{argc > 2 ? argv[2] : CIFAR_PATH};
+        cifar_path += "../ensemble-cifar/" + std::to_string(label_to_idx[label]);
         fmt::print("cifar path: {}\n", cifar_path);
-        client_threads parallel_runs{num_gpus, setting, cifar_path};
+        client_threads parallel_runs{num_gpus, setting, label, cifar_path};
         parallel_runs.join_clients();
     }
 
