@@ -18,8 +18,8 @@ MlpDeepImpl::MlpDeepImpl(int64_t num_classes)
 
 torch::Tensor MlpDeepImpl::forward(torch::Tensor x) {
     x = x.view({-1,  3 * 32 * 32});
-    x = fc0->forward(x);
-    x = fc1->forward(x);
-    x = fc2->forward(x);
+    x = torch::nn::functional::relu(fc0->forward(x));
+    x = torch::nn::functional::relu(fc1->forward(x));
+    x = torch::nn::functional::relu(fc2->forward(x));
     return fc3->forward(x);
 }
