@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include "image_io.h"
+#include <fmt/core.h>
 
 namespace fs = std::filesystem;
 
@@ -52,8 +53,11 @@ std::vector<std::pair<std::string, int>> create_samples(
         }
     }
     std::sort(samples.begin(), samples.end(), [](const std::pair<std::string, int>& lhs, const std::pair<std::string, int>& rhs){
-        return lhs.first < rhs.first;
+        return (lhs.first.size() <= rhs.first.size()) and lhs.first < rhs.first;
     });
+    for (auto sample : samples){
+       fmt::print("{}\n", sample.first);
+    }
     return samples;
 }
 }  // namespace
