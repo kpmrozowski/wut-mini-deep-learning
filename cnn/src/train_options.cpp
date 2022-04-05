@@ -8,10 +8,10 @@ std::vector<SimulationSetting> prepare_settings() {
     augumentation::augumentation_type augumentation_type;
     std::vector<SimulationSetting> settings;
 
-    int experiment_type_idx = 26;
+    int experiment_type_idx = 24;
     std::vector<std::string> experiment_name{7, ""};
     fmt::print("\nfiles that are gonna be created:\n");
-    for (int net_type_idx = 0; net_type_idx < 1; ++net_type_idx) {
+    for (int net_type_idx = 2; net_type_idx < 3; ++net_type_idx) {
         switch (net_type_idx) {
         case 0:
             network_type = network_type::convnet;
@@ -45,8 +45,8 @@ std::vector<SimulationSetting> prepare_settings() {
             experiment_name.at(2) = "REGLAM_";
                 switch (reg_lambda_idx) {
                 case 0:
-                    regularization_lambda = 1e-4;
-                    experiment_name.at(3) = "1e-4_";
+                    regularization_lambda = 1e-3;
+                    experiment_name.at(3) = "1e-3_";
                     break;
                 case 1:
                     regularization_lambda = 1e-1;
@@ -56,7 +56,7 @@ std::vector<SimulationSetting> prepare_settings() {
                 if (regularization_type == regularization::regularization_type::none) {
                     experiment_name.at(3) = "none_";
                 }
-                for (int aug_type_idx = 0; aug_type_idx < 3; ++aug_type_idx) {
+                for (int aug_type_idx = 1; aug_type_idx < 2; ++aug_type_idx) {
                     experiment_name.at(4) = "AUG_";
                     switch (aug_type_idx) { // Also this
                     case 0:

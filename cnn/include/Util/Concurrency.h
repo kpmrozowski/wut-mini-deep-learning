@@ -2,7 +2,7 @@
 #define UTIL_CONCURRENCY_H
 #include <fmt/core.h>
 #pragma once
-#ifdef WITH_CUDA
+#ifdef ON_EDEN
 #include <Eden_resources/Ngpus_Ncpus.h>
 #endif
 #include <condition_variable>
@@ -45,23 +45,21 @@ class join_threads {
 
 class client_threads {
    std::atomic_bool m_done;
-   std::string m_label;
    std::vector<std::thread> m_threads;
    std::atomic<int> m_workers_up = 0;
    join_threads m_joiner;
    void client_work(int run_idx);
 
  public:
-   std::string imagenette_data_path;
+   std::string cifar_path;
    SimulationSetting setting;
-   client_threads(unsigned gpus_count, SimulationSetting s, std::string label, std::string data_path = CIFAR_PATH)
+   client_threads(unsigned gpus_count, SimulationSetting s, std::string data_path = CIFAR_PATH)
        : m_done(false)
-       , m_label(label)
        , m_joiner(m_threads, m_workers_up)
-       , imagenette_data_path(data_path)
+       , cifar_path(data_path)
        , setting(s)
    {
-#ifdef WITH_CUDA
+#ifdef ON_EDEN
       if (gpus_count == 0)
          gpus_count = Eden_resources::get_gpus_count();
 #endif

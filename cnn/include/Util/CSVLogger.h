@@ -1,5 +1,5 @@
-#ifndef MSI_CARCASSONNE_CSVLOGGER_H
-#define MSI_CARCASSONNE_CSVLOGGER_H
+#ifndef CSVLOGGER_H
+#define CSVLOGGER_H
 // #include <fmt/os.h>
 #include <fmt/os.h>
 #include <fmt/compile.h>
@@ -37,4 +37,4 @@ class CSVLogger {
 
 }// namespace util
 
-#endif//MSI_CARCASSONNE_CSVLOGGER_H
+#endif//CSVLOGGER_H

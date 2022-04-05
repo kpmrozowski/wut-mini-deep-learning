@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(cnn VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
-option(WITH_CUDA "should be built for CUDA" ON)
+option(WITH_CUDA "should be built for CUDA" OFF)
 option(MEASURE_TIME "measure time too?" OFF)
-option(ON_EDEN "prepare for eden?" ON)
+option(ON_EDEN "prepare for eden?" OFF)
 
 if (${WITH_CUDA})
     include_directories(/usr/local/cuda/targets/x86_64-linux/include)
@@ -51,8 +51,8 @@ target_sources(${EXECUTABLE_NAME} PRIVATE src/main.cpp
                                           src/train_options.cpp
                                           src/Concurrency.cpp
                                           include/convnet.h
-                                          # include/mlp1.h
-                                          # include/mlpdeep.h
+                                          include/mlp1.h
+                                          include/mlpdeep.h
                                           include/image_manip.h
                                           include/imagefolder_dataset.h
                                           include/augumentation.h
@@ -62,7 +62,7 @@ target_include_directories(${EXECUTABLE_NAME} PRIVATE include)
 
 add_subdirectory(utils/image_io)
 
-if (${WITH_CUDA})
+if (${ON_EDEN})
 target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt eden_resources)
 else()
 target_link_libraries(${EXECUTABLE_NAME} ${TORCH_LIBRARIES} image-io fmt)
@@ -75,7 +75,7 @@ set_target_properties(${EXECUTABLE_NAME} PROPERTIES
   CXX_STANDARD 17
   CXX_STANDARD_REQUIRED YES
 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -no-pie")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O0 -no-pie")
 if(DOWNLOAD_DATASETS)
     add_dependencies(${EXECUTABLE_NAME} imagenette)
 endif()

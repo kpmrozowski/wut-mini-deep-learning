@@ -59,7 +59,7 @@ std::vector<std::pair<std::string, int>> create_samples(
 ImageFolderDataset::ImageFolderDataset(const std::string &root, Mode mode, torch::IntArrayRef image_load_size)
     : mode_(mode),
       image_load_size_(image_load_size.begin(), image_load_size.end()),
-      mode_dir_(root + "/" + (mode == Mode::TRAIN ? "train" : "val")),
+      mode_dir_(root + "/" + (mode == Mode::TEST ? "test" : (mode == Mode::VAL ? "val" : "train"))),
       classes_(parse_classes(mode_dir_)),
       class_to_index_(create_class_to_index_map(classes_)),
       samples_(create_samples(mode_dir_, class_to_index_)) {}

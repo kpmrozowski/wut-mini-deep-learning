@@ -3,8 +3,8 @@
 #include <torch/optim/schedulers/step_lr.h>
 #include <torch/torch.h>
 #include <convnet.h>
-// #include <mlp1.h>
-// #include <mlpdeep.h>
+#include <mlp1.h>
+#include <mlpdeep.h>
 #include <imagefolder_dataset.h>
 #include <Util/CSVLogger.h>
 #ifdef MEASURE_TIME
@@ -32,7 +32,7 @@ const int aug_number = 10;
 const bool aug_consistent = false;
 
 template <typename M>
-void with_model(int run_idx, SimulationSetting setting, std::string imagenette_data_path, M model, std::string label) {
+void with_model(int run_idx, SimulationSetting setting, std::string cifar_path, M model) {
 #ifdef MEASURE_TIME
     auto training_time = util::unix_time();
 #endif
@@ -48,7 +48,7 @@ void with_model(int run_idx, SimulationSetting setting, std::string imagenette_d
     experiment_run_name += "EXP_";
     experiment_run_name += std::to_string(experiment_type_idx);
     experiment_run_name += "_" + experiment_name;
-    experiment_run_name += label;
+    experiment_run_name += "RUN_" + std::to_string(run_idx);;
     const std::string logs_path{std::string{LOGS_PATH} + experiment_run_name};
     const std::string models_path{std::string{MODELS_PATH} + experiment_run_name};
 
@@ -56,7 +56,7 @@ void with_model(int run_idx, SimulationSetting setting, std::string imagenette_d
     auto cuda_available = torch::cuda::is_available();
     torch::Device device(cuda_available ? torch::kCUDA : torch::kCPU);
     std::cout << (cuda_available ? "CUDA available. Training on GPU." : "Training on CPU.") << '\n';
-#ifdef WITH_CUDA
+#ifdef ON_EDEN
     unsigned num_gpus = Eden_resources::get_gpus_count();
     unsigned gpu_idx = run_idx;
     if (cuda_available) device.set_index(gpu_idx < num_gpus ? gpu_idx : num_gpus - 1);
@@ -64,10 +64,10 @@ void with_model(int run_idx, SimulationSetting setting, std::string imagenette_d
     torch::cuda::manual_seed(seed_cuda + run_idx);
     torch::cuda::manual_seed_all(seed_cuda + run_idx);  
     
-    // Imagenette dataset
+    // Cifar dataset
     auto train_dataset = augumentation::augumented_dataset(
         dataset::ImageFolderDataset(
-            imagenette_data_path, 
+            cifar_path, 
             dataset::ImageFolderDataset::Mode::TRAIN,
             {img_height, img_width}),
             augumentation_type, aug_number, aug_consistent)
@@ -79,7 +79,7 @@ void with_model(int run_idx, SimulationSetting setting, std::string imagenette_d
     
     auto test_dataset = 
         dataset::ImageFolderDataset(
-            imagenette_data_path,
+            cifar_path,
             dataset::ImageFolderDataset::Mode::VAL,
             {img_height, img_width})
         .map(torch::data::transforms::Normalize<>({0.485, 0.456, 0.406}, {0.229, 0.224, 0.225}))
@@ -292,13 +292,13 @@ void client_threads::client_work(int run_idx)
     // Model
     switch (network_type) {
         case network_type::convnet:
-            with_model(run_idx, setting, imagenette_data_path, ConvNet(num_classes), m_label);
+            with_model(run_idx, setting, cifar_path, ConvNet(num_classes));
             break;
-        // case network_type::mlp1:
-        //     with_model(run_idx, setting, imagenette_data_path, Mlp1(num_classes), m_label);
-        //     break;
-        // case network_type::mlpdeep:
-        //     with_model(run_idx, setting, imagenette_data_path, MlpDeep(num_classes), m_label);
-        //     break;
+        case network_type::mlp1:
+            with_model(run_idx, setting, cifar_path, Mlp1(num_classes));
+            break;
+        case network_type::mlpdeep:
+            with_model(run_idx, setting, cifar_path, MlpDeep(num_classes));
+            break;
     }
 }

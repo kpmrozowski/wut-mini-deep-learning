@@ -16,7 +16,8 @@ class ImageFolderDataset : public torch::data::datasets::Dataset<ImageFolderData
  public:
     enum class Mode {
        TRAIN,
-       VAL
+       VAL,
+       TEST
     };
 
     explicit ImageFolderDataset(const std::string &root, Mode mode = Mode::TRAIN,
