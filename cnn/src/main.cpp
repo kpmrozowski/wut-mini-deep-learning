@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <train_options.h>
-#include <Util/Concurrency.h>
+// #include <Util/Concurrency.h>
 #include <imagefolder_dataset.h>
 #include <Util/CSVLogger.h>
 #include <Util/CSVReader.h>
@@ -21,6 +21,18 @@ const int64_t batch_size = 256;
 const int64_t batch_size = 4048;//=39GB;
 #endif
 const int64_t data_workers = 1;
+const std::vector<std::string> idx_to_label{
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
+};
 
 using Mode = dataset::ImageFolderDataset::Mode;
 using Ensemble = std::map<int, std::array<std::pair<double, ConvNet>, 3>>;
@@ -43,7 +55,8 @@ using Loader = std::unique_ptr<
     >
 >;
 
-inline std::pair<double, double> evaluate(Ensemble& models, const Dataset& dataset, const torch::Device& device) {
+inline std::tuple<double, std::vector<std::pair<uint64_t, std::string>>> 
+evaluate(Ensemble& models, const Dataset& dataset, const torch::Device& device) {
     const int64_t bs = 1;
     auto num_samples = dataset.size().value();
     auto loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
@@ -51,34 +64,45 @@ inline std::pair<double, double> evaluate(Ensemble& models, const Dataset& datas
 
     torch::InferenceMode no_grad;
     uint64_t num_correct = 0;
-    double running_loss = 0.0;
+    // double running_loss = 0.0;
+    std::vector<std::pair<uint64_t, std::string>> predicted_labels;
+    predicted_labels.reserve(num_samples);
+    uint64_t count = 0;
     
     for (const auto& batch : *loader) {
-        auto data = batch.data.to(torch::Device(torch::kCPU));
-        auto target = batch.target.to(torch::Device(torch::kCPU));
+        // auto data = batch.data.to(device);
+        // auto target = batch.target.to(device);
 
         // std::array<double, 10> score = {};
-        torch::Tensor scores = torch::zeros(10);
+        torch::Tensor scores = torch::zeros(10);//.to(device);
 
         for (auto &model_data : models) {
             for (int i = 0; i < 3; ++i) {
-                auto output = model_data.second[i].second->forward(data);
+                auto output = model_data.second[i].second->forward(batch.data);
                 auto prediction = output.argmax(1);
-                std::cout << "prediction: " << prediction << std::endl;
-                if (prediction.item<int>() == model_data.first) {
+                // std::cout << "prediction: " << prediction << std::endl;
+                if (prediction.item<int>() == 1) {
                     scores[model_data.first] += model_data.second[i].first; // Here use the model quality
                 }
             }
         }
         // int ensemble_prediction = std::distance(score.begin(), std::max_element(score.begin(), score.end()));
-        auto loss = torch::nn::functional::cross_entropy(scores, target);
-        running_loss += loss.template item<double>() * data.size(0);
-        auto prediction = scores.argmax(1);
-        num_correct += prediction.eq(target).sum().template item<int64_t>();
+        // auto loss = torch::nn::functional::cross_entropy(scores, batch.target);
+        // running_loss += loss.template item<double>() * batch.data.size(0);
+        // std::cout << "scores: \n" << scores << std::endl;
+        // std::cout << "\ntarget: \n" << batch.target << std::endl;
+        auto prediction = scores.argmax(0);
+      //   std::cout << "\npred: " << prediction << "label: " << batch.target << std::endl;
+        num_correct += prediction.eq(batch.target).sum().template item<int64_t>();
+        uint64_t pred_idx = prediction.template item<int64_t>();
+        std::string pred_label = idx_to_label[pred_idx];
+        predicted_labels.emplace_back(count, pred_label);
+        fmt::print("{} ", ++count);
     }
     
     auto accuracy = static_cast<double>(num_correct) / num_samples;
-    return std::make_pair(running_loss, accuracy);
+    // return std::make_tuple(running_loss, accuracy, predicted_labels);
+    return std::make_tuple(accuracy, predicted_labels);
 }
 
 inline void ensemble(int argc, char **argv) {
@@ -147,18 +171,23 @@ inline void ensemble(int argc, char **argv) {
         archive.load_from(std::string(MODELS_PATH) + "EXP_26_REG_none_REGLAM_none_AUG_none_" + label);
         ConvNet model1;
         model1->load(archive);
+        model1->to(device);
         model1->eval();
 
         double model2_acc = util::read_record(
             std::string(LOGS_PATH) + "EXP_27_REG_none_REGLAM_none_AUG_crops_" + label + "_test.csv", 1, 1);
         archive.load_from(std::string(MODELS_PATH) + "EXP_27_REG_none_REGLAM_none_AUG_crops_" + label);
         ConvNet model2;
+        model2->load(archive);
+        model2->to(device);
         model2->eval();
 
         double model3_acc = util::read_record(
             std::string(LOGS_PATH) + "EXP_28_REG_none_REGLAM_none_AUG_colors_" + label + "_test.csv", 1, 1);
         archive.load_from(std::string(MODELS_PATH) + "EXP_28_REG_none_REGLAM_none_AUG_colors_" + label);
         ConvNet model3;
+        model3->load(archive);
+        model3->to(device);
         model3->eval();
 
         models.insert({label_idx.second, {
@@ -166,13 +195,22 @@ inline void ensemble(int argc, char **argv) {
             std::make_pair(model2_acc, model2),
             std::make_pair(model3_acc, model3)}});
     }
-    auto [train_loss, train_accuracy] = evaluate(models, train_dataset, device);
-    auto [val_loss, val_accuracy] = evaluate(models, val_dataset, device);
+    // std::vector<std::pair<uint64_t, std::string>> predictions_train;
+    // std::vector<std::pair<uint64_t, std::string>> predictions_test;
+    // std::vector<std::pair<uint64_t, std::string>> predictions_val;
+    auto [train_accuracy, predictions_train] = evaluate(models, train_dataset, device);
+    auto [val_accuracy, predictions_val] = evaluate(models, val_dataset, device);
     
-    fmt::print("Ensemble_loss:\n\ttrain={:0.6f}\n\tval={:0.6f}\n", train_loss, val_loss);
+    // fmt::print("Ensemble_loss:\n\ttrain={:0.6f}\n\tval={:0.6f}\n", train_loss, val_loss);
     fmt::print("Ensemble_accuracy:\n\ttrain={:0.6f}\n\tval={:0.6f}\n", train_accuracy, val_accuracy);
-    util::CSVLogger g_logger_validating(std::string(LOGS_PATH) + "ensemble_acc.csv", "train_loss", "train_accuracy", "val_loss", "val_accuracy");
-    g_logger_validating.log(train_loss, train_accuracy, val_loss, val_accuracy);
+    util::CSVLogger g_logger(std::string(LOGS_PATH) + "ensemble_acc.csv", "train_accuracy", "val_accuracy");
+    g_logger.log(train_accuracy, val_accuracy);
+    util::CSVLogger g_logger_predictions_train(std::string(LOGS_PATH) + "ensemble_predictions_train.csv", "id", "class");
+    util::CSVLogger g_logger_predictions_val(std::string(LOGS_PATH) + "ensemble_predictions_val.csv", "id", "class");
+    for (const auto& pred : predictions_train)
+        g_logger_predictions_train.log(pred.first, pred.second);
+    for (const auto& pred : predictions_val)
+        g_logger_predictions_val.log(pred.first, pred.second);
 }
 
 void training(int argc, char **argv) {
@@ -187,8 +225,8 @@ void training(int argc, char **argv) {
 #endif
         std::string cifar_path{argc > 2 ? argv[2] : CIFAR_PATH};
         fmt::print("cifar path: {}\n", CIFAR_PATH);
-        client_threads parallel_runs{num_gpus, setting, CIFAR_PATH};
-        parallel_runs.join_clients();
+        // client_threads parallel_runs{num_gpus, setting, CIFAR_PATH};
+        // parallel_runs.join_clients();
     }
 
     std::cout << "Training finished!\n\n";

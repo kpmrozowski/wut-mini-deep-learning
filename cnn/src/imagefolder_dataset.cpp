@@ -51,7 +51,9 @@ std::vector<std::pair<std::string, int>> create_samples(
             }
         }
     }
-
+    std::sort(samples.begin(), samples.end(), [](const std::pair<std::string, int>& lhs, const std::pair<std::string, int>& rhs){
+        return lhs.first < rhs.first;
+    });
     return samples;
 }
 }  // namespace

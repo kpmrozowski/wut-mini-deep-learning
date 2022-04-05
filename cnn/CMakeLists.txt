@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(cnn VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
-option(WITH_CUDA "should be built for CUDA" OFF)
+option(WITH_CUDA "should be built for CUDA" ON)
 option(MEASURE_TIME "measure time too?" OFF)
-option(ON_EDEN "prepare for eden?" OFF)
+option(ON_EDEN "prepare for eden?" ON)
 
 if (${WITH_CUDA})
     include_directories(/usr/local/cuda/targets/x86_64-linux/include)

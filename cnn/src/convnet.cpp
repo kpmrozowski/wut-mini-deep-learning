@@ -73,23 +73,14 @@ ConvNetImpl::ConvNetImpl(int64_t num_classes)
 }
 
 torch::Tensor ConvNetImpl::forward(torch::Tensor x) {
-    x.to(torch::Device(torch::kCPU));
     x = layer01->forward(x);
-    x.to(torch::Device(torch::kCPU));
     x = layer02->forward(x);
-    x.to(torch::Device(torch::kCPU));
     x = layer03->forward(x);
-    x.to(torch::Device(torch::kCPU));
     x = layer04->forward(x);
-    x.to(torch::Device(torch::kCPU));
     x = layer05->forward(x);
-    x.to(torch::Device(torch::kCPU));
     x = pool->forward(x);
-    x.to(torch::Device(torch::kCPU));
     x = x.view({-1,  256 * 4 * 4});
-    x.to(torch::Device(torch::kCPU));
     x = layer06->forward(x);
-    x.to(torch::Device(torch::kCPU));
     return fc->forward(x);
 }
 
