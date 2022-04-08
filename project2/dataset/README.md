@@ -1,0 +1,1 @@
+If you have the `tensorflow-speech-recognition-challenge.zip` in the directory `~`, use `./unpack.sh ~/tensorflow-speech-recognition-challenge.zip` and so on. If the file is in the `dataset/` directory (the same as script), you can just run `./unpack.sh`.
