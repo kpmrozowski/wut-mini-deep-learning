@@ -1,0 +1,10 @@
+name = "Project2"
+uuid = "80a74936-8dfd-49a8-a43d-dfb61d2aeea5"
+authors = ["Mateusz Majewski", "Kornel Mrozowski"]
+version = "0.0.0"
+
+[deps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
+WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
