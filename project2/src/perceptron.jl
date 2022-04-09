@@ -2,13 +2,13 @@ function perceptron(seed::Integer)
     rng = StableRNG(seed)
     train = gettrain()
 
-    yes = filter(x -> x.second == :yes, train)
-    no = filter(x -> x.second == :no, train)
+    yes = filter(x -> x.label == :yes, train)
+    no = filter(x -> x.label == :no, train)
 
-    x_train = reduce(hcat, rpad.(getfield.(vcat(yes, no), :first), 16000, 0)) |> gpu
-    # x_train = convert.(Float32, reduce(hcat, rpad.(getfield.(vcat(yes, no), :first), 16000, 0))) |> gpu # (1)
-    y_train = onehotbatch(getfield.(vcat(yes, no), :second), [:yes, :no]) |> gpu
-    # y_train = convert.(Float32, onehotbatch(getfield.(vcat(yes, no), :second), [:yes, :no])) |> gpu # (2)
+    x_train = reduce(hcat, rpad.(getfield.(vcat(yes, no), :data), 16000, 0)) |> gpu
+    # x_train = convert.(Float32, reduce(hcat, rpad.(getfield.(vcat(yes, no), :data), 16000, 0))) |> gpu # (1)
+    y_train = onehotbatch(getfield.(vcat(yes, no), :label), [:yes, :no]) |> gpu
+    # y_train = convert.(Float32, onehotbatch(getfield.(vcat(yes, no), :label), [:yes, :no])) |> gpu # (2)
 
     model = Chain(
         x -> convert.(Float32, x ./ 2^15), # (3)
