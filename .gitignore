@@ -1,5 +1,13 @@
+data
 models
+models_rnn
+models_cnn
+graphs
+graphs_rnn
+graphs_cnn
 logs
+logs_rnn
+logs_cnn
 out
 .cache
 compile_commands.json
