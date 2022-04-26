@@ -77,8 +77,8 @@ sr.m.compile(loss='categorical_crossentropy',
              metrics=['accuracy'])
 
 # to save a png of the model you need pydot and graphviz installed
-if not os.path.exists('/models'):
-   os.makedirs('/models')
+if not os.path.exists('./models'):
+   os.makedirs('./models')
 plot_model(sr.m, 
            to_file = './models/{}_{}.png'.format(arch,date), 
            show_shapes = True)
@@ -90,8 +90,8 @@ checkpointer = ModelCheckpoint(filepath='./models/{}_{}_best.h5'.format(arch, da
    
 earlystopping = EarlyStopping()
 
-if not os.path.exists('/logs'):
-   os.makedirs('/logs')
+if not os.path.exists('./logs'):
+   os.makedirs('./logs')
 tensorboard = TensorBoard(log_dir = './logs/{}_{}'.format(date, time()), 
                           histogram_freq = 0, 
                           write_graph = True, 
