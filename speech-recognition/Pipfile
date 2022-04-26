@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+tensorflow = "*"
+numpy = "*"
+matplotlib = "*"
+librosa = "*"
+scikit-learn = "*"
+jupyter = "*"
+pydot = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
