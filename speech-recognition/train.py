@@ -2,8 +2,9 @@ import numpy as np
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from tensorflow.keras.utils import to_categorical, plot_model
 from tensorflow.keras import backend as K
+from tensorflow.keras.layers import LSTM, GRU
 from time import time
-from models import ResNet
+from models import ResNet, LSTMNet
 from collections import Counter
 import matplotlib.pyplot as plt
 import os
@@ -71,6 +72,8 @@ arch = 'resnet8_16_32'
 
 # Build the model
 sr = ResNet(filters_list, input_size, output_size)
+# sr = LSTMNet(input_size[:-1], output_size, LSTM)
+# sr = LSTMNet(input_size[:-1], output_size, GRU)
 sr.build()
 sr.m.compile(loss='categorical_crossentropy', 
              optimizer='adadelta', 

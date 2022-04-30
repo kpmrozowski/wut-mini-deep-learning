@@ -97,38 +97,26 @@ def ctc_lambda_func(args):
     
         
 #%%
+class LSTMNet():
+    def __init__(self,
+                 input_size,
+                 output_size,
+                 layer,
+                 initializer='glorot_uniform'):
+        self.input_size = input_size
+        self.output_size = output_size
+        self.layer = layer
+        self.initializer = initializer
+        self.m = None
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+    def build(self):
+        # Shape somewhat inspired by https://www.researchgate.net/publication/322927149_Bengali_speech_recognition_A_double_layered_LSTM-RNN_approach
+        # but I made it bigger for no reason
+        i = Input(shape = self.input_size, name = 'input')
+        x = self.layer(256, kernel_initializer = self.initializer, return_sequences = True)(i)
+        x = self.layer(256, kernel_initializer = self.initializer, return_sequences = True)(i)
+        x = self.layer(256, kernel_initializer = self.initializer)(x)
+        x = Dense(self.output_size, activation = 'softmax')(x)
+
+        self.m = Model(i,x)
+        return self.m
