@@ -12,6 +12,8 @@ logs_cnn
 out
 .cache
 compile_commands.json
+dataset
+
 # Prerequisites
 *.d
 

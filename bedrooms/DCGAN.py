@@ -62,9 +62,9 @@ dataset = dset.ImageFolder(
 dataloader = torch.utils.data.DataLoader(
     dataset, batch_size=local.batch_size, shuffle=True, num_workers=local.workers
 )
-device = torch.device(
-    "cuda:0" if (torch.cuda.is_available() and local.ngpu > 0) else "cpu"
-)
+device_str = "cuda:0" if (torch.cuda.is_available() and local.ngpu > 0) else "cpu"
+print('DEVICE:', device_str)
+device = torch.device(device_str)
 
 # %%
 real_batch = next(iter(dataloader))
