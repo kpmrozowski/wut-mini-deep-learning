@@ -22,7 +22,7 @@ class SaveBestModel:
         
     def __call__(
         self, current_valid_loss, 
-        epoch, model, optimizer, criterion, netType: NetType, config
+        epoch, model, optimizer, criterion,
     ):
         if current_valid_loss < self.best_valid_loss:
             self.best_valid_loss = current_valid_loss

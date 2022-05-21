@@ -138,22 +138,26 @@ if conf['VERBOSE']:
 # # Training
 
 # %%
-adadelta = torch.optim.Adadelta(netG.parameters(),
+if OptimizerName.ADADELTA._value_ == conf['OPTIMIZER_G_NAME']:
+    optimizerG = torch.optim.Adadelta(netG.parameters(),
                                 lr=conf['ADADELTA']['LR'],
                                 rho=conf['ADADELTA']['RHO'],
                                 eps=conf['ADADELTA']['EPS'],
                                 weight_decay=0.001)
-adam = torch.optim.Adam(netD.parameters(),
+elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_G_NAME']:
+    optimizerG = torch.optim.Adam(netG.parameters(),
                         lr=conf['ADAM']['LR'],
                         betas=(conf['ADAM']['BETA1'], 0.999))
-if OptimizerName.ADADELTA._value_ == conf['OPTIMIZER_G_NAME']:
-    optimizerG = adadelta
-elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_G_NAME']:
-    optimizerG = adam
 if OptimizerName.ADADELTA._value_ == conf['OPTIMIZER_D_NAME']:
-    optimizerD = adadelta
+    optimizerD = torch.optim.Adadelta(netD.parameters(),
+                                lr=conf['ADADELTA']['LR'],
+                                rho=conf['ADADELTA']['RHO'],
+                                eps=conf['ADADELTA']['EPS'],
+                                weight_decay=0.001)
 elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_D_NAME']:
-    optimizerD = adam
+    optimizerD = torch.optim.Adam(netD.parameters(),
+                        lr=conf['ADAM']['LR'],
+                        betas=(conf['ADAM']['BETA1'], 0.999))
 
 saveBestModelG = SaveBestModel(NetType.GENERATOR, conf)
 saveBestModelD = SaveBestModel(NetType.DISCRIMINATOR, conf)
@@ -211,16 +215,25 @@ for epoch in range(conf['TRAIN']['NUM_EPOCHS']):
             D_G_z2,
         )
     )
+    if (0.50 < D_x < 0.99):
+        saveBestModelD(errD.item(), epoch, netD, optimizerD, criterion)
+    if (0.01 < D_G_z2 < 0.50):
+        saveBestModelG(errG.item(), epoch, netG, optimizerG, criterion)
 
     D_losses.append(errD.item())
     G_losses.append(errG.item())
     D_x_table.append(D_x)
     D_G_z1_table.append(D_G_z1)
     D_G_z2_table.append(D_G_z2)
-    if (0.50 < D_x < 0.99):
-        saveBestModelD(errD.item(), epoch, netD, optimizerD, criterion)
-    if (0.01 < D_G_z2 < 0.50):
-        saveBestModelG(errG.item(), epoch, netG, optimizerG, criterion)
+    save_plots(
+        train_accs=[
+            {'label': 'D(x)', 'accuracies': D_x_table},
+            {'label': 'D(G(z))[fake]', 'accuracies': D_G_z1_table},
+            {'label': 'D(G(z))[real]', 'accuracies': D_G_z2_table}],
+        train_losses=[
+            {'label': 'Generator', 'losses': D_x_table},
+            {'label': 'Discriminator', 'losses': D_G_z1_table}],
+        config=conf)
 
 # %% [markdown]
 # # Results
