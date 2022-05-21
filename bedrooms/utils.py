@@ -26,13 +26,13 @@ class SaveBestModel:
     ):
         if current_valid_loss < self.best_valid_loss:
             self.best_valid_loss = current_valid_loss
-            print(f'\tEpoch {epoch+1}, saving best ' + self.name + ' model, loss: {self.best_valid_loss}')
+            print(f'\tEpoch {epoch+1}, saving best ' + self.name + ' model, loss: {current_valid_loss}')
             torch.save({
                 'epoch': epoch+1,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'loss': criterion,
-                }, self.models_path + '/final_' + self.name + '.pth')
+                }, self.models_path + '/best_' + self.name + '.pth')
 
 def save_model(model, optimizer, criterion, netType: NetType, config):
     """
@@ -45,7 +45,7 @@ def save_model(model, optimizer, criterion, netType: NetType, config):
     models_path = config['PATHS']['MODELS']
     epochs = config['TRAIN']['NUM_EPOCHS']
     
-    print(f"Saving final model...")
+    print(f"Saving final {exp_name} model...")
     torch.save({
                 'epoch': epochs,
                 'model_state_dict': model.state_dict(),
@@ -90,6 +90,7 @@ def save_plots(train_accs, train_losses, config):
     plt.savefig(grapgs_path + '/loss_' + exp_name + '.png')
 
 def plot_dataset_examples(dataloader, device, config):
+    print(f"Saving dataset examples...")
     grapgs_path = config['PATHS']['GRAPHS']
     exp_name = config['EXP_NAME']
     real_batch = next(iter(dataloader))
@@ -100,36 +101,38 @@ def plot_dataset_examples(dataloader, device, config):
                 (1, 2, 0),
             )
     plt.figure(figsize=(8, 8))
+    plt.imshow(data)
     plt.axis("off")
     plt.title("Training Images")
     if config['VIZUALISE']:
-        plt.imshow(data)
-    else:
-        plt.savefig(grapgs_path + '/dataset_examples_' + exp_name + '.png')
+        plt.show()
+    plt.savefig(grapgs_path + '/dataset_examples_' + exp_name + '.png')
 
 def plot_generated_examples(fake, config):
+    print(f"Saving fake examples...")
     grapgs_path = config['PATHS']['GRAPHS']
     exp_name = config['EXP_NAME']
     data = np.transpose(vutils.make_grid(fake, padding=2, normalize=True).cpu(), (1, 2, 0))
     
     plt.figure(figsize=(8, 8))
+    plt.imshow(data)
     plt.axis("off")
     plt.title("Fake Images")
     if config['VIZUALISE']:
-        plt.imshow(data)
-    else:
-        plt.savefig(grapgs_path + '/generated_examples_' + exp_name + '.png')
+        plt.show()
+    plt.savefig(grapgs_path + '/generated_images_' + exp_name + '.png')
 
 def plot_interpolated_examples(fake_interp, config):
+    print(f"Saving fake interpolated examples...")
     grapgs_path = config['PATHS']['GRAPHS']
     exp_name = config['EXP_NAME']
     data = np.transpose(
         vutils.make_grid(fake_interp, nrow=10, padding=2, normalize=True).cpu(), (1, 2, 0))
 
     plt.figure(figsize=(10, 10))
+    plt.imshow(data)
     plt.axis("off")
     plt.title("Fake Images Interpolated")
     if config['VIZUALISE']:
-        plt.imshow(data)
-    else:
-        plt.savefig(grapgs_path + '/interpolated_images' + exp_name + '.png')
+        plt.show(data)
+    plt.savefig(grapgs_path + '/interpolated_images_' + exp_name + '.png')
