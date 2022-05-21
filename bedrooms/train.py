@@ -12,6 +12,11 @@
 #     language: python
 #     name: python3
 # ---
+
+# %% [markdown]
+# # Throat cleaning
+
+# %%
 import os
 directory_path = os.getcwd()
 print("My current directory is : " + directory_path)
@@ -22,15 +27,12 @@ if 'bedrooms' != folder_name:
     print("Your directory name is : " + folder_name, 'but you should be in directory \"bedrooms\" containing folders \"dataset\" and \"configs\"')
     exit()
 
-# %% [markdown]
-# # Throat cleaning
-
 # %%
 # %matplotlib inline
 
 # %%
 from utils import SaveBestModel, save_model, save_plots, plot_dataset_examples, plot_generated_examples, plot_interpolated_examples
-from networks import NetType, GeneratorDCGAN, DiscriminatorDCGAN, ModelName, OptimizerName
+from networks import NetType, GeneratorDCGAN, DiscriminatorDCGAN, ModelName, OptimizerName, weights_init
 
 # %%
 import random
@@ -136,6 +138,20 @@ if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
     ).to(device)
 elif ModelName.VAE._value_ == conf['MODEL_NAME']:
     pass #TODO
+
+if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
+   print('GENERATOR is using ' + str(conf['TRAIN']['NGPU']) + ' GPUs')
+   netG = torch.nn.DataParallel(netG, list(range(conf['TRAIN']['NGPU'])))
+else:
+   print('GENERATOR training on 1 gpu! D:')
+netG.apply(weights_init)
+
+if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
+   print('DISCRIMINATOR is using ' + str(conf['TRAIN']['NGPU']) + ' GPUs')
+   netD = torch.nn.DataParallel(netD, list(range(conf['TRAIN']['NGPU'])))
+else:
+   print('DISCRIMINATOR training on 1 gpu! D:')
+netD.apply(weights_init)
 
 criterion = object_from_dict(conf['TRAIN']['CRITERION'])
 # torch.nn.BCELoss()

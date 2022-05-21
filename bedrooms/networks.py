@@ -22,11 +22,9 @@ def weights_init(m):
         nn.init.constant_(m.bias.data, 0)
 
 class GeneratorDCGAN(nn.Module):
-    def __init__(self, device, ngpu, nc, nz, ngf):
+    def __init__(self, nc, nz, ngf):
         super(GeneratorDCGAN, self).__init__()
         self.net_type = NetType.GENERATOR
-        self.device = device
-        self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is Z, going into a convolution
             nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False),
@@ -50,22 +48,15 @@ class GeneratorDCGAN(nn.Module):
             # state size. (nc) x 64 x 64
         )
 
-        if (device.type == "cuda") and (self.ngpu > 1):
-            self = nn.DataParallel(self, list(range(self.ngpu)))
-
-        self.apply(weights_init)
-
     def forward(self, input):
         return self.main(input)
 
 
 # %%
 class DiscriminatorDCGAN(nn.Module):
-    def __init__(self, device, ngpu, nc, ndf):
+    def __init__(self, nc, ndf):
         super(DiscriminatorDCGAN, self).__init__()
         self.net_type = NetType.DISCRIMINATOR
-        self.device = device
-        self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
@@ -86,11 +77,6 @@ class DiscriminatorDCGAN(nn.Module):
             nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid(),
         )
-
-        if (device.type == "cuda") and (self.ngpu > 1):
-            self = nn.DataParallel(self, list(range(self.ngpu)))
-
-        self.apply(weights_init)
 
     def forward(self, input):
         return self.main(input)
