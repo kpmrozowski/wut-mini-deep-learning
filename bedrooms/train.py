@@ -62,6 +62,17 @@ with open(args['config']) as file:
 if conf['DEBUG']:
    print(conf)
 
+# check if dataset path is correct
+if not os.path.exists(conf['PATHS']['DATASET'] + '/bedroom'):
+    print('you would better put a dataset in \"' + conf['PATHS']['DATASET'] + '/bedroom\"')
+    exit()
+
+# create models and graphs paths if does not exists
+if not os.path.exists(conf['PATHS']['MODELS']):
+    os.makedirs(conf['PATHS']['MODELS'])
+if not os.path.exists(conf['PATHS']['GRAPHS']):
+    os.makedirs(conf['PATHS']['GRAPHS'])
+
 random.seed(conf['SEED'])
 torch.manual_seed(conf['SEED'])
 

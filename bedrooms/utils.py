@@ -26,8 +26,7 @@ class SaveBestModel:
     ):
         if current_valid_loss < self.best_valid_loss:
             self.best_valid_loss = current_valid_loss
-            print(f"\nBest validation loss: {self.best_valid_loss}")
-            print(f"\nSaving best model for epoch: {epoch+1}\n")
+            print(f"\tEpoch {epoch+1}, saving best model, loss: {self.best_valid_loss}")
             torch.save({
                 'epoch': epoch+1,
                 'model_state_dict': model.state_dict(),
