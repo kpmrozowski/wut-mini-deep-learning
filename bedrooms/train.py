@@ -124,15 +124,11 @@ plot_dataset_examples(dataloader, device=device, config=conf)
 # %%
 if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
     netG = GeneratorDCGAN(
-        device=device,
-        ngpu=conf['TRAIN']['NGPU'],
         nc=conf['DCGAN']['ARCHITECTURE']['NC'],
         nz=conf['NZ'],
         ngf=conf['DCGAN']['ARCHITECTURE']['NGF']
     ).to(device)
     netD = DiscriminatorDCGAN(
-        device=device,
-        ngpu=conf['TRAIN']['NGPU'],
         nc=conf['DCGAN']['ARCHITECTURE']['NC'],
         ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
     ).to(device)
