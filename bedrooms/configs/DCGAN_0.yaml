@@ -27,7 +27,7 @@ TRAIN:
   SHUFFLE: True
   NUM_EPOCHS: 100
   DEVICE: "cuda"
-  NGPU: 1
+  NGPU: 2
   CRITERION:
     type: torch.nn.BCELoss
 
