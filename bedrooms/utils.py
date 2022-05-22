@@ -26,7 +26,7 @@ class SaveBestModel:
     ):
         if current_valid_loss < self.best_valid_loss:
             self.best_valid_loss = current_valid_loss
-            print(f'\tEpoch {epoch+1}, saving best ' + self.name + ' model, loss: {current_valid_loss}')
+            print(f'\tEpoch {epoch+1}, saving best ' + self.name + f' model, loss: {current_valid_loss}')
             torch.save({
                 'epoch': epoch+1,
                 'model_state_dict': model.state_dict(),
@@ -87,7 +87,10 @@ def save_plots(train_accs, train_losses, config):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
+    if config['VIZUALISE']:
+        plt.show()
     plt.savefig(grapgs_path + '/loss_' + exp_name + '.png')
+    plt.close()
 
 def plot_dataset_examples(dataloader, device, config):
     print(f"Saving dataset examples...")
@@ -107,6 +110,7 @@ def plot_dataset_examples(dataloader, device, config):
     if config['VIZUALISE']:
         plt.show()
     plt.savefig(grapgs_path + '/dataset_examples_' + exp_name + '.png')
+    plt.close()
 
 def plot_generated_examples(fake, config):
     print(f"Saving fake examples...")
@@ -121,6 +125,7 @@ def plot_generated_examples(fake, config):
     if config['VIZUALISE']:
         plt.show()
     plt.savefig(grapgs_path + '/generated_images_' + exp_name + '.png')
+    plt.close()
 
 def plot_interpolated_examples(fake_interp, config):
     print(f"Saving fake interpolated examples...")
@@ -136,3 +141,4 @@ def plot_interpolated_examples(fake_interp, config):
     if config['VIZUALISE']:
         plt.show(data)
     plt.savefig(grapgs_path + '/interpolated_images_' + exp_name + '.png')
+    plt.close()

@@ -278,8 +278,8 @@ else:
             {'label': 'D(G(z))[fake]', 'accuracies': D_G_z1_table},
             {'label': 'D(G(z))[real]', 'accuracies': D_G_z2_table}],
         train_losses=[
-            {'label': 'Generator', 'losses': D_x_table},
-            {'label': 'Discriminator', 'losses': D_G_z1_table}],
+            {'label': 'Generator', 'losses': G_losses},
+            {'label': 'Discriminator', 'losses': D_losses}],
         config=conf)
 
 # %% [markdown]

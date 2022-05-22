@@ -5,8 +5,8 @@
 VERBOSE: True
 VIZUALISE: False
 DEBUG: True
-LOAD: True
-EXP_NAME: "DCGAN_0"
+LOAD: False
+EXP_NAME: "DCGAN_0.1"
 SEED: 69
 NZ: 100 # length of latent vector
 FIG_SIZE: [10, 5]
@@ -26,11 +26,8 @@ TRAIN:
   CRITERION:
     type: torch.nn.BCELoss
 
-OPTIMIZER_G:
-  NAME: Adadelta # to choose: Adadelta, Adam
-
-OPTIMIZER_G_NAME: Adadelta # to choose: Adadelta, Adam
-OPTIMIZER_D_NAME: Adadelta # to choose: Adadelta, Adam
+OPTIMIZER_G_NAME: Adam # to choose: Adadelta, Adam
+OPTIMIZER_D_NAME: Adam # to choose: Adadelta, Adam
 
 # optimizers
 ADADELTA:
@@ -40,7 +37,7 @@ ADADELTA:
   WEIGHT_DECAY: 0
 
 ADAM:
-  LR: 0.0002
+  LR: 0.000002
   BETA1: 0.5
 
 MODEL_NAME: "DCGAN" # to choose: DCGAN, VAE, ...todo
