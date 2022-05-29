@@ -38,10 +38,12 @@ def save_model(model, optimizer, criterion, netType: NetType, config):
     """
     Function to save the trained model to disk.
     """
-    if NetType.DISCRIMINATOR == netType:
+    if NetType.DISCRIMINATOR == netType or NetType.ENCODER == netType:
         exp_name = config['EXP_NAME'] + '_D'
-    if NetType.GENERATOR == netType:
+    elif NetType.GENERATOR == netType or NetType.DECODER == netType:
         exp_name = config['EXP_NAME'] + '_G'
+    else:
+        raise ValueError
     models_path = config['PATHS']['MODELS']
     epochs = config['TRAIN']['NUM_EPOCHS']
     
@@ -141,4 +143,25 @@ def plot_interpolated_examples(fake_interp, config):
     if config['VIZUALISE']:
         plt.show(data)
     plt.savefig(grapgs_path + '/interpolated_images_' + exp_name + '.png')
+    plt.close()
+
+def plot_reconstructed_examples(dataloader, netD, netG, config):
+    print(f"Saving reconstructed examples...")
+    grapgs_path = config['PATHS']['GRAPHS']
+    exp_name = config['EXP_NAME']
+
+    input = next(iter(dataloader))[0][:10, :, :, :]
+    latent = netD(input)[:, :config['NZ']]
+    output = netG(latent)
+
+    data = np.transpose(
+        vutils.make_grid(torch.cat([input, output]), nrow=10, padding=2, normalize=True).cpu(), (1, 2, 0))
+
+    plt.figure(figsize=(10, 10))
+    plt.imshow(data)
+    plt.axis("off")
+    plt.title("Reconstructed Images")
+    if config['VIZUALISE']:
+        plt.show(data)
+    plt.savefig(grapgs_path + '/reconstructed_images_' + exp_name + '.png')
     plt.close()
