@@ -6,7 +6,7 @@ VERBOSE: True
 VIZUALISE: True
 DEBUG: True
 LOAD: False
-EXP_NAME: "VAE_0.1"
+EXP_NAME: "VAE_0.0"
 SEED: 69
 NZ: 10000 # length of latent vector
 FIG_SIZE: [10, 5]
@@ -24,7 +24,7 @@ TRAIN:
   NUM_EPOCHS: 100
   # NUM_EPOCHS: 15
   DEVICE: "cuda:0"
-  NGPU: 1
+  NGPU: 2
   CRITERION:
     type: torch.nn.BCELoss
 

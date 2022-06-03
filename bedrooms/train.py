@@ -18,7 +18,6 @@
 
 # %%
 import os
-from tkinter.dialog import DIALOG_ICON
 directory_path = os.getcwd()
 print("My current directory is : " + directory_path)
 
