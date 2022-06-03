@@ -18,6 +18,7 @@
 
 # %%
 import os
+from tkinter.dialog import DIALOG_ICON
 directory_path = os.getcwd()
 print("My current directory is : " + directory_path)
 
@@ -38,7 +39,6 @@ from networks import DecoderVAE, EncoderVAE, NetType, GeneratorDCGAN, Discrimina
 import random
 import argparse
 import math
-from typing import cast
 from tqdm.auto import tqdm
 import yaml
 from iglovikov_helper_functions.config_parsing.utils import object_from_dict
@@ -62,7 +62,7 @@ if (not os.path.exists(config_path)):
 with open(args['config']) as file:
     conf = yaml.safe_load(file)
 
-# conf = yaml.safe_load(open('./configs/DCGAN_0.yaml'))
+# conf = yaml.safe_load(open('./configs/VAE_0.yaml'))
 
 if conf['DEBUG']:
    print(conf)
@@ -78,13 +78,13 @@ if not os.path.exists(conf['PATHS']['MODELS']):
 if not os.path.exists(conf['PATHS']['GRAPHS']):
     os.makedirs(conf['PATHS']['GRAPHS'])
 
-random.seed(conf['SEED'])
-gen = torch.manual_seed(conf['SEED'])
 
 # %% [markdown]
 # # Data loading
 
 # %%
+random.seed(conf['SEED'])
+gen = torch.manual_seed(conf['SEED'])
 image_size = 64
 dataset = torchvision.datasets.ImageFolder(
     root=conf['PATHS']['DATASET'],
@@ -154,6 +154,7 @@ if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
    netG = torch.nn.DataParallel(netG, list(range(conf['TRAIN']['NGPU'])))
 else:
    print('netG training on 1 gpu! D:')
+
 netG.apply(weights_init)
 
 if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
@@ -161,6 +162,7 @@ if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
    netD = torch.nn.DataParallel(netD, list(range(conf['TRAIN']['NGPU'])))
 else:
    print('netD training on 1 gpu! D:')
+
 netD.apply(weights_init)
 
 criterion = object_from_dict(conf['TRAIN']['CRITERION'])
@@ -200,8 +202,8 @@ elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_D_NAME']:
 else:
     raise ValueError
 
-saveBestModelG = SaveBestModel(cast(NetType, netG.net_type), conf)
-saveBestModelD = SaveBestModel(cast(NetType, netD.net_type), conf)
+saveBestModelG = SaveBestModel(NetType.GENERATOR, conf)
+saveBestModelD = SaveBestModel(NetType.DISCRIMINATOR, conf)
 
 real_label = 1.0
 fake_label = 0.0
@@ -317,8 +319,8 @@ else:
                 config=conf)
 
 
-    save_model(netG, optimizerG, criterion, cast(NetType, netG.net_type), conf)
-    save_model(netD, optimizerD, criterion, cast(NetType, netD.net_type), conf)
+    save_model(netG, optimizerG, criterion, NetType.GENERATOR, conf)
+    save_model(netD, optimizerD, criterion, NetType.DISCRIMINATOR, conf)
     if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
         save_plots(
             train_accs=[

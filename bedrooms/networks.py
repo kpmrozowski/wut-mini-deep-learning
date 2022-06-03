@@ -49,7 +49,6 @@ class GeneratorDCGAN(nn.Module):
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
-
     def forward(self, input):
         return self.main(input)
 
@@ -78,7 +77,6 @@ class DiscriminatorDCGAN(nn.Module):
             nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid(),
         )
-
     def forward(self, input):
         return self.main(input)
 
@@ -108,7 +106,6 @@ class EncoderVAE(nn.Module):
             nn.Linear(ndf * 8 * 4 * 4, 2 * nz),
             nn.ReLU(True),
         )
-
     def forward(self, input):
         return self.main(input)
 
@@ -138,7 +135,6 @@ class DecoderVAE(nn.Module):
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
-
     def forward(self, input):
         return self.main(input)
 
