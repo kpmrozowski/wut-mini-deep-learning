@@ -241,21 +241,21 @@ else:
 
                 noise = torch.randn(b_size, conf['NZ'], 1, 1, device=device)
                 fake = netG(noise)
-                label.fill_(fake_label)
+                l = label.fill_(fake_label)
                 output = netD(fake.detach()).view(-1)
                 errD_fake = criterion(output, label)
                 errD_fake.backward()
                 D_G_z1 = output.mean().item()
                 errD = errD_real + errD_fake
-                optimizerD.step()
+                s = optimizerD.step()
 
                 netG.zero_grad()
-                label.fill_(real_label)
+                l = label.fill_(real_label)
                 output = netD(fake).view(-1)
                 errG = criterion(output, label)
                 errG.backward()
                 D_G_z2 = output.mean().item()
-                optimizerG.step()
+                s = optimizerG.step()
             elif ModelName.VAE._value_ == conf['MODEL_NAME']:
                 netD.zero_grad()
                 netG.zero_grad()
@@ -276,11 +276,10 @@ else:
 
                 repr_err = torch.nn.functional.mse_loss(input, output)
                 total_err = KLD + repr_err
-                print(KLD, repr_err, total_err)
                 total_err.backward()
 
-                optimizerD.step()
-                optimizerG.step()
+                s = optimizerD.step()
+                s = optimizerG.step()
             else:
                 raise ValueError
 
@@ -316,6 +315,17 @@ else:
                     {'label': 'Generator', 'losses': G_losses},
                     {'label': 'Discriminator', 'losses': D_losses}],
                 config=conf)
+        elif ModelName.VAE._value_ == conf['MODEL_NAME']:
+            print(
+                "[%d/%d]\tKLD: %.4f\trepr_err: %.4f\ttotal_err: %.4f"
+                % (
+                    epoch + 1,
+                    conf['TRAIN']['NUM_EPOCHS'],
+                    KLD,
+                    repr_err,
+                    total_err,
+                )
+            )
 
 
     save_model(netG, optimizerG, criterion, NetType.GENERATOR, conf)
