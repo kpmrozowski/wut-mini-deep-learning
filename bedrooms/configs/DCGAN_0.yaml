@@ -47,7 +47,7 @@ DCGAN:
     NGF: 64 # relates to the depth of feature maps carried through the generator
     NDF: 64 # sets the depth of feature maps propagated through the discriminator
   ACTIVATION: "sigmoid"
-  LOSS: 
+  LOSS:
     type: segmentation_models_pytorch.utils.losses.DiceLoss
   METRICS:
     type: segmentation_models_pytorch.utils.metrics.IoU
@@ -57,9 +57,4 @@ DCGAN:
     T_0: 1
     T_mult: 2
     eta_min: 5e-5
-
-# VAE:
-#   ARCHITECTURE:
-#   ACTIVATION: 
-#   METRICS:
-#   SCHEDULER:
+  MODE: "one_epoch_each"

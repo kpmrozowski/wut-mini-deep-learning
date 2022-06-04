@@ -228,6 +228,19 @@ if conf['LOAD']:
 else:
     print("Starting Training Loop...")
     for epoch in range(conf['TRAIN']['NUM_EPOCHS']):
+        if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
+            if conf['DCGAN']['MODE'] == "all_the_time":
+                allowD = True
+                allowG = True
+            elif conf['DCGAN']['MODE'] == "one_epoch_each":
+                allowD = epoch % 2 == 0
+                allowG = epoch % 2 == 1
+            else:
+                raise ValueError
+        else:
+            # shut up Python extension
+            allowD = True
+            allowG = True
         for i, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
             if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
                 netD.zero_grad()
@@ -247,7 +260,8 @@ else:
                 errD_fake.backward()
                 D_G_z1 = output.mean().item()
                 errD = errD_real + errD_fake
-                s = optimizerD.step()
+                if allowD:
+                    s = optimizerD.step()
 
                 netG.zero_grad()
                 l = label.fill_(real_label)
@@ -255,7 +269,8 @@ else:
                 errG = criterion(output, label)
                 errG.backward()
                 D_G_z2 = output.mean().item()
-                s = optimizerG.step()
+                if allowG:
+                    s = optimizerG.step()
             elif ModelName.VAE._value_ == conf['MODEL_NAME']:
                 netD.zero_grad()
                 netG.zero_grad()
