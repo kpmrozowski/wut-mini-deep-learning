@@ -27,24 +27,33 @@ if 'bedrooms' != folder_name:
     print("Your directory name is : " + folder_name, 'but you should be in directory \"bedrooms\" containing folders \"dataset\" and \"configs\"')
     exit()
 
+import time
 # %%
 # %matplotlib inline
 
 # %%
+t0 = time.time()
+print("loading utils...", end=" ")
 from utils import SaveBestModel, save_model, save_plots, plot_dataset_examples, plot_generated_examples, plot_interpolated_examples, plot_reconstructed_examples
+print("loaded in", time.time() - t0)
+print("loading networks...", end=" ")
 from networks import DecoderVAE, EncoderVAE, NetType, GeneratorDCGAN, DiscriminatorDCGAN, ModelName, OptimizerName, weights_init
+print("loaded in", time.time() - t0)
 
 # %%
+print("loading dependencies...", end=" ")
 import random
 import argparse
 import math
 from tqdm.auto import tqdm
 import yaml
 from iglovikov_helper_functions.config_parsing.utils import object_from_dict
-
+print("loaded in", time.time() - t0)
+print("loading torch...", end=" ")
 # import torch.backends.cudnn as cudnn
 import torchvision
 import torch
+print("loaded in", time.time() - t0)
 
 # %% [markdown]
 # # Argument parsing
