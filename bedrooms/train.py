@@ -296,7 +296,6 @@ else:
                     alpha = (epoch % conf['DCGAN']['PROGRESSIVE_STEP'] + 1) / (conf['DCGAN']['PROGRESSIVE_STEP'] + 1)
                 else:
                     alpha = 1
-                print(level, alpha)
 
                 netD.zero_grad()
                 real_cpu = data[0].to(device)
