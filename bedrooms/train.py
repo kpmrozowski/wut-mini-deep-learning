@@ -37,7 +37,7 @@ print("loading utils...", end=" ")
 from utils import SaveBestModel, save_model, save_plots, plot_dataset_examples, plot_generated_examples, plot_interpolated_examples, plot_reconstructed_examples
 print("loaded in", time.time() - t0)
 print("loading networks...", end=" ")
-from networks import DecoderVAE, EncoderVAE, NetType, GeneratorDCGAN, DiscriminatorDCGAN, ModelName, OptimizerName, weights_init
+from networks import DecoderVAE, DiscriminatorDCGANProgressive, EncoderVAE, GeneratorDCGANProgressive, NetType, GeneratorDCGAN, DiscriminatorDCGAN, ModelName, OptimizerName, weights_init
 print("loaded in", time.time() - t0)
 
 # %%
@@ -143,6 +143,16 @@ if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
         nc=conf['DCGAN']['ARCHITECTURE']['NC'],
         ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
     ).to(device)
+if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+    netG = GeneratorDCGANProgressive(
+        nc=conf['DCGAN']['ARCHITECTURE']['NC'],
+        nz=conf['NZ'],
+        ngf=conf['DCGAN']['ARCHITECTURE']['NGF']
+    ).to(device)
+    netD = DiscriminatorDCGANProgressive(
+        nc=conf['DCGAN']['ARCHITECTURE']['NC'],
+        ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
+    ).to(device)
 elif ModelName.VAE._value_ == conf['MODEL_NAME']:
     netG = DecoderVAE(
         nc=conf['VAE']['ARCHITECTURE']['NC'],
@@ -237,7 +247,7 @@ if conf['LOAD']:
 else:
     print("Starting Training Loop...")
     for epoch in range(conf['TRAIN']['NUM_EPOCHS']):
-        if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
+        if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
             if conf['DCGAN']['MODE'] == "all_the_time":
                 allowD = True
                 allowG = True
@@ -280,6 +290,43 @@ else:
                 D_G_z2 = output.mean().item()
                 if allowG:
                     s = optimizerG.step()
+            elif ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+                level = min([4, (epoch // conf['DCGAN']['PROGRESSIVE_STEP'] + 1) // 2])
+                if epoch < conf['DCGAN']['PROGRESSIVE_STEP'] * 8 and (epoch // conf['DCGAN']['PROGRESSIVE_STEP']) % 2 == 1:
+                    alpha = (epoch % conf['DCGAN']['PROGRESSIVE_STEP'] + 1) / (conf['DCGAN']['PROGRESSIVE_STEP'] + 1)
+                else:
+                    alpha = 1
+                print(level, alpha)
+
+                netD.zero_grad()
+                real_cpu = data[0].to(device)
+                real_cpu = torchvision.transforms.functional.resize(real_cpu, image_size // 2**(4 - level), torchvision.transforms.InterpolationMode.NEAREST)
+                b_size = real_cpu.size(0)
+                label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
+                output = netD(real_cpu, level, alpha).view(-1)
+                errD_real = criterion(output, label)
+                errD_real.backward()
+                D_x = output.mean().item()
+
+                noise = torch.randn(b_size, conf['NZ'], 1, 1, device=device)
+                fake = netG(noise, level, alpha)
+                l = label.fill_(fake_label)
+                output = netD(fake.detach(), level, alpha).view(-1)
+                errD_fake = criterion(output, label)
+                errD_fake.backward()
+                D_G_z1 = output.mean().item()
+                errD = errD_real + errD_fake
+                if allowD:
+                    s = optimizerD.step()
+
+                netG.zero_grad()
+                l = label.fill_(real_label)
+                output = netD(fake, level, alpha).view(-1)
+                errG = criterion(output, label)
+                errG.backward()
+                D_G_z2 = output.mean().item()
+                if allowG:
+                    s = optimizerG.step()
             elif ModelName.VAE._value_ == conf['MODEL_NAME']:
                 netD.zero_grad()
                 netG.zero_grad()
@@ -307,7 +354,7 @@ else:
             else:
                 raise ValueError
 
-        if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
+        if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
             print(
                 "[%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f"
                 % (
@@ -320,10 +367,11 @@ else:
                     D_G_z2,
                 )
             )
-            if (0.50 < D_x < 0.99):
-                saveBestModelD(errD.item(), epoch, netD, optimizerD, criterion)
-            if (0.01 < D_G_z2 < 0.50):
-                saveBestModelG(errG.item(), epoch, netG, optimizerG, criterion)
+            if ModelName.DCGANProgressive._value_ != conf['MODEL_NAME'] or epoch > conf['DCGAN']['PROGRESSIVE_STEP'] * 8:
+                if (0.50 < D_x < 0.99):
+                    saveBestModelD(errD.item(), epoch, netD, optimizerD, criterion)
+                if (0.01 < D_G_z2 < 0.50):
+                    saveBestModelG(errG.item(), epoch, netG, optimizerG, criterion)
 
             G_losses.append(errG.item())
             D_losses.append(errD.item())
@@ -354,7 +402,7 @@ else:
 
     save_model(netG, optimizerG, criterion, NetType.GENERATOR, conf)
     save_model(netD, optimizerD, criterion, NetType.DISCRIMINATOR, conf)
-    if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
+    if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
         save_plots(
             train_accs=[
                 {'label': 'D(x)', 'accuracies': D_x_table},
