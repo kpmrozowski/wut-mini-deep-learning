@@ -9,6 +9,7 @@ jupyter = "*"
 jupytext = "*"
 matplotlib = "*"
 torchvision = "*"
+pytorch-fid = "*"
 
 [dev-packages]
 

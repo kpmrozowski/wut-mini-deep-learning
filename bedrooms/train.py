@@ -260,7 +260,7 @@ else:
             # shut up Python extension
             allowD = True
             allowG = True
-        for i, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
+        for x, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
             if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
                 netD.zero_grad()
                 real_cpu = data[0].to(device)
@@ -420,6 +420,26 @@ fixed_noise = torch.randn(64, conf['NZ'], 1, 1, device=device)
 with torch.no_grad():
     fake = netG(fixed_noise).detach().cpu()
 plot_generated_examples(fake=fake, config=conf)
+
+# %%
+import shutil
+import tempfile
+from pytorch_fid import fid_score
+
+# Unfortunately, the library above assumes, for some reason, that all the images are stored in a directory.
+# Ugh.
+with tempfile.TemporaryDirectory() as fakepath:
+    for x in range(64):
+        torchvision.utils.save_image(fake[x, :, :, :], fakepath + "/{}.png".format(x))
+
+    truepath = conf['PATHS']['DATASET'] + "/rescaled"
+    if not os.path.isdir(truepath):
+        with tempfile.TemporaryDirectory() as temp_truepath:
+            for x, data in enumerate(dataloader, 0):
+                for d in range(data[0].shape[0]):
+                    torchvision.utils.save_image(data[0][d, :, :, :], temp_truepath + "/{}_{}.png".format(x, d))
+            shutil.move(temp_truepath, truepath)
+    print("FID: {}".format(fid_score.calculate_fid_given_paths([fakepath, truepath], 50, device, 2048)))
 
 # %%
 interp_noise = (
