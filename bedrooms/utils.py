@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 import torchvision.utils as vutils
 import numpy as np
-from networks import NetType
+from mytypes import NetType
 
 class SaveBestModel:
     """

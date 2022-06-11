@@ -12,17 +12,17 @@ NZ: 100 # length of latent vector
 FIG_SIZE: [10, 5]
 
 PATHS:
-  DATASET: "./dataset"
+  DATASET: "../../lsun-dataset"
   MODELS: "./models"
   GRAPHS: "./graphs"
 
 TRAIN:
-  WORKERS: 32
-  BATCH_SIZE: 128
+  WORKERS: 16
+  BATCH_SIZE: 1024
   SHUFFLE: True
-  NUM_EPOCHS: 1000
+  NUM_EPOCHS: 2
   DEVICE: "cuda:0"
-  NGPU: 2
+  NGPU: 1
   CRITERION:
     type: torch.nn.BCELoss
 
@@ -45,7 +45,7 @@ DCGAN:
   ARCHITECTURE:
     NC: 3 # number of color channels in the input images. For color images this is 3
     NGF: 64 # relates to the depth of feature maps carried through the generator
-    NDF: 64 # sets the depth of feature maps propagated through the discriminator
+    NDF: 16 # sets the depth of feature maps propagated through the discriminator
   ACTIVATION: "sigmoid"
   LOSS:
     type: segmentation_models_pytorch.utils.losses.DiceLoss
@@ -58,4 +58,4 @@ DCGAN:
     T_mult: 2
     eta_min: 5e-5
   MODE: "all_the_time"
-  PROGRESSIVE_STEP: 5
+  PROGRESSIVE_STEP: 2

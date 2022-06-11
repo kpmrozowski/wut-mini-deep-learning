@@ -13,7 +13,7 @@ FIG_SIZE: [10, 5]
 
 # Paths
 PATHS:
-  DATASET: "/dev/shm/kmrozows/dataset"
+  DATASET: "./dataset"
   MODELS: "./models"
   GRAPHS: "./graphs"
 

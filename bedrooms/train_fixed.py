@@ -80,8 +80,8 @@ if conf['DEBUG']:
    print(conf)
 
 # check if dataset path is correct
-if not os.path.exists(conf['PATHS']['DATASET'] + '/bedroom'):
-    print('you would better put a dataset in \"' + conf['PATHS']['DATASET'] + '/bedroom\"')
+if not os.path.exists(conf['PATHS']['DATASET'] + '/bedroom64x64'):
+    print('you would better put a dataset in \"' + conf['PATHS']['DATASET'] + '/bedroom64x64\"')
     exit()
 
 # create models and graphs paths if does not exists
@@ -99,11 +99,9 @@ random.seed(conf['SEED'])
 gen = torch.manual_seed(conf['SEED'])
 image_size = 64
 dataset = torchvision.datasets.ImageFolder(
-    root=conf['PATHS']['DATASET'],
+    root=conf['PATHS']['DATASET'] + "/bedroom64x64",
     transform=torchvision.transforms.Compose(
         [
-            torchvision.transforms.Resize(image_size),
-            torchvision.transforms.CenterCrop(image_size),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
@@ -147,7 +145,7 @@ if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
         nc=conf['DCGAN']['ARCHITECTURE']['NC'],
         ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
     ).to(device)
-elif ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
     netG = GeneratorDCGANProgressive(
         nc=conf['DCGAN']['ARCHITECTURE']['NC'],
         nz=conf['NZ'],
@@ -237,7 +235,7 @@ D_G_z1_table = []
 D_G_z2_table = []
 
 if conf['LOAD']:
-    checkpointG = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_G' + '.pth')
+    checkpointG = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_D' + '.pth')
     checkpointD = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_D' + '.pth')
     netG.load_state_dict(checkpointG['model_state_dict'], strict=False)
     netD.load_state_dict(checkpointD['model_state_dict'], strict=False)
@@ -264,7 +262,7 @@ else:
             # shut up Python extension
             allowD = True
             allowG = True
-        for x, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
+        for i, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
             if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
                 netD.zero_grad()
                 real_cpu = data[0].to(device)
@@ -420,34 +418,14 @@ else:
 # # Results
 
 # %%
-fixed_noise = torch.randn(64, conf['NZ'], 1, 1, device=device)
+fixed_noise = torch.randn(64, conf['NZ'], device=device)
 with torch.no_grad():
     fake = netG(fixed_noise).detach().cpu()
 plot_generated_examples(fake=fake, config=conf)
 
 # %%
-import shutil
-import tempfile
-from pytorch_fid import fid_score
-
-# Unfortunately, the library above assumes, for some reason, that all the images are stored in a directory.
-# Ugh.
-with tempfile.TemporaryDirectory() as fakepath:
-    for x in range(64):
-        torchvision.utils.save_image(fake[x, :, :, :], fakepath + "/{}.png".format(x))
-
-    truepath = conf['PATHS']['DATASET'] + "/rescaled"
-    if not os.path.isdir(truepath):
-        with tempfile.TemporaryDirectory() as temp_truepath:
-            for x, data in enumerate(dataloader, 0):
-                for d in range(data[0].shape[0]):
-                    torchvision.utils.save_image(data[0][d, :, :, :], temp_truepath + "/{}_{}.png".format(x, d))
-            shutil.move(temp_truepath, truepath)
-    print("FID: {}".format(fid_score.calculate_fid_given_paths([fakepath, truepath], 50, device, 2048)))
-
-# %%
 interp_noise = (
-    (torch.tensor(list(range(0, 10, 1)), device=device) / 9).reshape(10, 1).tile(1, conf['NZ'], 1, 1)
+    (torch.tensor(list(range(0, 10, 1)), device=device) / 9).reshape(10, 1).tile(1, conf['NZ'])
 )
 with torch.no_grad():
     interp = netG(interp_noise).detach().cpu()
