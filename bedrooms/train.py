@@ -143,7 +143,7 @@ if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
         nc=conf['DCGAN']['ARCHITECTURE']['NC'],
         ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
     ).to(device)
-if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+elif ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
     netG = GeneratorDCGANProgressive(
         nc=conf['DCGAN']['ARCHITECTURE']['NC'],
         nz=conf['NZ'],
