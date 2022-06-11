@@ -233,7 +233,7 @@ D_G_z1_table = []
 D_G_z2_table = []
 
 if conf['LOAD']:
-    checkpointG = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_D' + '.pth')
+    checkpointG = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_G' + '.pth')
     checkpointD = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_D' + '.pth')
     netG.load_state_dict(checkpointG['model_state_dict'], strict=False)
     netD.load_state_dict(checkpointD['model_state_dict'], strict=False)
@@ -416,14 +416,14 @@ else:
 # # Results
 
 # %%
-fixed_noise = torch.randn(64, conf['NZ'], device=device)
+fixed_noise = torch.randn(64, conf['NZ'], 1, 1, device=device)
 with torch.no_grad():
     fake = netG(fixed_noise).detach().cpu()
 plot_generated_examples(fake=fake, config=conf)
 
 # %%
 interp_noise = (
-    (torch.tensor(list(range(0, 10, 1)), device=device) / 9).reshape(10, 1).tile(1, conf['NZ'])
+    (torch.tensor(list(range(0, 10, 1)), device=device) / 9).reshape(10, 1).tile(1, conf['NZ'], 1, 1)
 )
 with torch.no_grad():
     interp = netG(interp_noise).detach().cpu()
