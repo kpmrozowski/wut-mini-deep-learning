@@ -264,7 +264,7 @@ else:
             # shut up Python extension
             allowD = True
             allowG = True
-        for x, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
+        for _, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
             if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
                 netD.zero_grad()
                 real_cpu = data[0].to(device)
@@ -422,7 +422,10 @@ else:
 # %%
 fixed_noise = torch.randn(64, conf['NZ'], 1, 1, device=device)
 with torch.no_grad():
-    fake = netG(fixed_noise).detach().cpu()
+    if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+        fake = netG(fixed_noise, 4, 1).detach().cpu()
+    else:
+        fake = netG(fixed_noise).detach().cpu()
 plot_generated_examples(fake=fake, config=conf)
 
 # %%
@@ -447,10 +450,13 @@ with tempfile.TemporaryDirectory() as fakepath:
 
 # %%
 interp_noise = (
-    (torch.tensor(list(range(0, 10, 1)), device=device) / 9).reshape(10, 1).tile(1, conf['NZ'], 1, 1)
+    (torch.tensor(list(range(0, 10, 1)), device=device) / 9).reshape(10, 1, 1, 1).tile(1, conf['NZ']).transpose(dim0=1,dim1=3)
 )
 with torch.no_grad():
-    interp = netG(interp_noise).detach().cpu()
+    if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+        interp = netG(interp_noise, 4, 1).detach().cpu()
+    else:
+        interp = netG(interp_noise).detach().cpu()
 plot_interpolated_examples(fake_interp=interp, config=conf)
 
 # %%

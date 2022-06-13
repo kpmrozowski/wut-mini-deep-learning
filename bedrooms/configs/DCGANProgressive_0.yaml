@@ -20,7 +20,7 @@ TRAIN:
   WORKERS: 16
   BATCH_SIZE: 1024
   SHUFFLE: True
-  NUM_EPOCHS: 2
+  NUM_EPOCHS: 1
   DEVICE: "cuda:0"
   NGPU: 1
   CRITERION:
@@ -40,12 +40,12 @@ ADAM:
   LR: 0.000002
   BETA1: 0.5
 
-MODEL_NAME: "DCGANProgressive" # to choose: DCGAN, VAE, ...todo
+MODEL_NAME: "DCGANProgressive" # to choose: DCGAN, DCGANProgressive, VAE, StyleGAN3, ...todo
 DCGAN:
   ARCHITECTURE:
     NC: 3 # number of color channels in the input images. For color images this is 3
     NGF: 64 # relates to the depth of feature maps carried through the generator
-    NDF: 16 # sets the depth of feature maps propagated through the discriminator
+    NDF: 64 # sets the depth of feature maps propagated through the discriminator
   ACTIVATION: "sigmoid"
   LOSS:
     type: segmentation_models_pytorch.utils.losses.DiceLoss

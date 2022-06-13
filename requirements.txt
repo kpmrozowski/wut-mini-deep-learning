@@ -5,3 +5,5 @@ matplotlib==3.5.2
 pyyaml==6.0.0
 iglovikov_helper_functions==0.0.53
 
+pip install https://github.com/podgorskiy/dnnlib/releases/download/0.0.1/dnnlib-0.0.1-py3-none-any.whl
+

@@ -1,0 +1,75 @@
+# 2022-06-12
+# Config file for StyleGAN3
+# Feel free to put local changes here.
+
+VERBOSE: True
+VIZUALISE: False
+DEBUG: True
+LOAD: False
+EXP_NAME: "StyleGAN3_0"
+SEED: 69
+NZ: 100 # length of latent vector
+FIG_SIZE: [10, 5]
+
+PATHS:
+  outdir: "/pc/repos/wut-mini-deep-learning/out/stylegan3-logs1"                # Where to save the results
+  data: "/pc/repos/lsun-dataset/bedroom64x64.zip"   # Training data
+
+TRAIN:
+  WORKERS: 16
+  BATCH_SIZE: 4
+  SHUFFLE: True
+  NUM_EPOCHS: 1
+  DEVICE: "cuda:0"
+  NGPU: 1
+  CRITERION:
+    type: torch.nn.BCELoss
+  GAMMA: 8.1     # R1 regularization weight
+
+OPTIMIZER_G_NAME: Adam # to choose: Adadelta, Adam
+OPTIMIZER_D_NAME: Adam # to choose: Adadelta, Adam
+
+# optimizers
+ADADELTA:
+  LR: 0.0001
+  RHO: 0.95
+  EPS: 0.0000007
+  WEIGHT_DECAY: 0
+
+ADAM:
+  LR: 0.000002
+  BETA1: 0.5
+
+MODEL_NAME: "StyleGAN3" # to choose: DCGAN, DCGANProgressive, VAE, StyleGAN3, ...todo
+StyleGAN3:
+  cfg: "stylegan3-t"            # Base configuration to choose: stylegan3-t, stylegan3-r, stylegan2
+  cond: False         # Train conditional model
+  mirror: False       # Enable dataset x-flips
+  aug: "ada"          # Augmentation mode, too choose: noaug, ada, fixed
+  freezed: 0      # Freeze first layers of D
+
+  # Misc hyperparameters.
+  p:            0.2     # Probability for --aug=fixed', metavar='FLOAT'
+  target:       0.6     # Target value for --aug=ada', metavar='FLOAT'
+  cbase:        32768   # Capacity multiplier', metavar='INT'
+  cmax:         128     # Max. feature maps', metavar='INT'
+  glr:          0.0025  # G learning rate  [default: varies]', metavar='FLOAT'
+  dlr:          0.002   # D learning rate', metavar='FLOAT'
+  mbstd_group:  4       # Minibatch std group size', metavar='INT'
+
+  # Misc settings.
+  metrics: ["fid50k_full"] # too chose multiple from: fid50k_full, kid50k_full, pr50k3_full, ppl2_wend, eqt50k_int, eqt50k_frac, eqr50k, fid50k, kid50k, pr50k3, is50k
+  kimg:         900   # Total training duration', metavar='KIMG'
+  tick:         1       # How often to print progress', metavar='KIMG'
+  snap:         10      # How often to save snapshots', metavar='TICKS'
+  resume:       null    # null if no resuming
+  fp32:         False   # Disable mixed-precision', metavar='BOOL'
+  nobench:      False   # Disable cuDNN benchmarking', metavar='BOOL'
+  dry_run:      False   # Print training options and exit'
+
+  # Generator args
+  z_dim: 64            # latent_size,  default: 64
+  c_dim: 0             # label_size,   default: 0
+  w_dim: 64            # dlatent_size, default: 64
+  img_resolution: 64   # resolution,   default: 64
+  img_channels: 3      # num_channels, default: 3

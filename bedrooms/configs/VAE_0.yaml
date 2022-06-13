@@ -40,11 +40,11 @@ ADAM:
   LR: 0.0002
   BETA1: 0.5
 
-MODEL_NAME: "VAE" # to choose: DCGAN, VAE, ...todo
+MODEL_NAME: "VAE" # to choose: DCGAN, DCGANProgressive, VAE, StyleGAN3, ...todo
 VAE:
   ARCHITECTURE:
     NC: 3 # number of color channels in the input images. For color images this is 3
-    NGF: 128 # relates to the depth of feature maps carried through the generator
+    NGF: 64 # relates to the depth of feature maps carried through the generator
     NDF: 64 # sets the depth of feature maps propagated through the discriminator
   ACTIVATION: "sigmoid"
   # TODO: This is kinda dubious in VAE.

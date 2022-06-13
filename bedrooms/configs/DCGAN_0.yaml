@@ -12,17 +12,17 @@ NZ: 100 # length of latent vector
 FIG_SIZE: [10, 5]
 
 PATHS:
-  DATASET: "./dataset"
+  DATASET: "../../lsun-dataset"
   MODELS: "./models"
   GRAPHS: "./graphs"
 
 TRAIN:
-  WORKERS: 32
+  WORKERS: 16
   BATCH_SIZE: 128
   SHUFFLE: True
-  NUM_EPOCHS: 100
+  NUM_EPOCHS: 1
   DEVICE: "cuda:0"
-  NGPU: 2
+  NGPU: 1
   CRITERION:
     type: torch.nn.BCELoss
 
@@ -40,7 +40,7 @@ ADAM:
   LR: 0.000002
   BETA1: 0.5
 
-MODEL_NAME: "DCGAN" # to choose: DCGAN, VAE, ...todo
+MODEL_NAME: "DCGAN" # to choose: DCGAN, DCGANProgressive, VAE, StyleGAN3, ...todo
 DCGAN:
   ARCHITECTURE:
     NC: 3 # number of color channels in the input images. For color images this is 3

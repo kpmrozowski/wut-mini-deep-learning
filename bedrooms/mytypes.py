@@ -10,6 +10,7 @@ class ModelName(Enum):
     DCGAN = 'DCGAN'
     DCGANProgressive = 'DCGANProgressive'
     VAE = 'VAE'
+    StyleGAN3 = 'StyleGAN3'
 
 class OptimizerName(Enum):
     ADAM = 'Adam'

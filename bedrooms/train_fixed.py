@@ -21,12 +21,6 @@ import os
 directory_path = os.getcwd()
 print("My current directory is : " + directory_path)
 
-folder_name = os.path.basename(directory_path)
-
-if 'bedrooms' != folder_name:
-    print("Your directory name is : " + folder_name, 'but you should be in directory \"bedrooms\" containing folders \"dataset\" and \"configs\"')
-    exit()
-
 import time
 # %%
 # %matplotlib inline
@@ -41,6 +35,7 @@ from mytypes import NetType, ModelName, OptimizerName
 from networks.dcgan import GeneratorDCGAN, DiscriminatorDCGAN
 from networks.vae import DecoderVAE, EncoderVAE
 from networks.dcganProgressive import DiscriminatorDCGANProgressive, GeneratorDCGANProgressive
+from networks.StyleGAN3 import train_stylegan
 # from bedrooms.networks.gantransformer import 
 from networks.networks import weights_init
 print("loaded in", time.time() - t0)
@@ -59,326 +54,361 @@ import torchvision
 import torch
 print("loaded in", time.time() - t0)
 
-# %% [markdown]
-# # Argument parsing
+    # %% [markdown]
+    # # Argument parsing
 
-# %% 
-parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--config', type=str,
-    help='config for the experiment', default='./configs/DCGAN_0.yaml')
-args = vars(parser.parse_args())
-config_path = args['config']
-if (not os.path.exists(config_path)):
-    print('no such file:', config_path)
-    exit()
-with open(args['config']) as file:
-    conf = yaml.safe_load(file)
+    # %% 
+def parse_arguments():
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-c', '--config', type=str,
+    #     help='config for the experiment', default='./configs/DCGAN_0.yaml')
+    # args = vars(parser.parse_args())
+    # config_path = args['config']
+    # if (not os.path.exists(config_path)):
+    #     print('no such file:', config_path)
+    #     exit()
+    # with open(args['config']) as file:
+    #     conf = yaml.safe_load(file)
 
-# conf = yaml.safe_load(open('./configs/VAE_0.yaml'))
+    conf = yaml.safe_load(open('./configs/StyleGAN3_0.yaml'))
 
-if conf['DEBUG']:
-   print(conf)
-
-# check if dataset path is correct
-if not os.path.exists(conf['PATHS']['DATASET'] + '/bedroom64x64'):
-    print('you would better put a dataset in \"' + conf['PATHS']['DATASET'] + '/bedroom64x64\"')
-    exit()
-
-# create models and graphs paths if does not exists
-if not os.path.exists(conf['PATHS']['MODELS']):
-    os.makedirs(conf['PATHS']['MODELS'])
-if not os.path.exists(conf['PATHS']['GRAPHS']):
-    os.makedirs(conf['PATHS']['GRAPHS'])
+    if conf['DEBUG']:
+        print(conf)
+    return conf
 
 
-# %% [markdown]
-# # Data loading
+def assert_cwd(conf):
+    folder_name = os.path.basename(directory_path)
 
-# %%
-random.seed(conf['SEED'])
-gen = torch.manual_seed(conf['SEED'])
-image_size = 64
-dataset = torchvision.datasets.ImageFolder(
-    root=conf['PATHS']['DATASET'] + "/bedroom64x64",
-    transform=torchvision.transforms.Compose(
-        [
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]
-    ),
-)
-dataloader = torch.utils.data.DataLoader(
-    dataset,
-    batch_size=conf['TRAIN']['BATCH_SIZE'],
-    shuffle=conf['TRAIN']['SHUFFLE'],
-    num_workers=conf['TRAIN']['WORKERS']
-)
+    if 'bedrooms' != folder_name:
+        print("Your directory name is : " + folder_name, 'but you should be in directory \"bedrooms\" containing folders \"dataset\" and \"configs\"')
+        exit()
 
-device_str = conf['TRAIN']['DEVICE']
+    # check if dataset path is correct
+    if not os.path.exists(conf['PATHS']['DATASET'] + '/bedroom64x64'):
+        print('you would better put a dataset in \"' + conf['PATHS']['DATASET'] + '/bedroom64x64\"')
+        exit()
 
-# unspecified device
-if 0 == len(device_str):
-    device_str = "cuda:0" if (torch.cuda.is_available() and conf['TRAIN']['NGPU'] > 0) else "cpu"
-# cuda choosed
-elif 'cuda:0' == device_str and (not torch.cuda.is_available() or not conf['TRAIN']['NGPU'] > 0):
-    device_str = 'cpu'
+    # create models and graphs paths if does not exists
+    if not os.path.exists(conf['PATHS']['MODELS']):
+        os.makedirs(conf['PATHS']['MODELS'])
+    if not os.path.exists(conf['PATHS']['GRAPHS']):
+        os.makedirs(conf['PATHS']['GRAPHS'])
+    return conf
 
-print('DEVICE:', device_str)
-device = torch.device(device_str)
 
-# %% [markdown]
-# # Examples from dataset
-# %%
-plot_dataset_examples(dataloader, device=device, config=conf)
+    # %% [markdown]
+    # # Data loading
 
-# %% [markdown]
-# # Networks
+    # %%
+def load_data(conf):
+    random.seed(conf['SEED'])
+    gen = torch.manual_seed(conf['SEED'])
+    image_size = 64
+    dataset = torchvision.datasets.ImageFolder(
+        root=conf['PATHS']['DATASET'] + "/bedroom64x64",
+        transform=torchvision.transforms.Compose(
+            [
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        ),
+    )
+    dataloader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=conf['TRAIN']['BATCH_SIZE'],
+        shuffle=conf['TRAIN']['SHUFFLE'],
+        num_workers=conf['TRAIN']['WORKERS']
+    )
 
-# %%
-if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
-    netG = GeneratorDCGAN(
-        nc=conf['DCGAN']['ARCHITECTURE']['NC'],
-        nz=conf['NZ'],
-        ngf=conf['DCGAN']['ARCHITECTURE']['NGF']
-    ).to(device)
-    netD = DiscriminatorDCGAN(
-        nc=conf['DCGAN']['ARCHITECTURE']['NC'],
-        ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
-    ).to(device)
-if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
-    netG = GeneratorDCGANProgressive(
-        nc=conf['DCGAN']['ARCHITECTURE']['NC'],
-        nz=conf['NZ'],
-        ngf=conf['DCGAN']['ARCHITECTURE']['NGF']
-    ).to(device)
-    netD = DiscriminatorDCGANProgressive(
-        nc=conf['DCGAN']['ARCHITECTURE']['NC'],
-        ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
-    ).to(device)
-elif ModelName.VAE._value_ == conf['MODEL_NAME']:
-    netG = DecoderVAE(
-        nc=conf['VAE']['ARCHITECTURE']['NC'],
-        nz=conf['NZ'],
-        ngf=conf['VAE']['ARCHITECTURE']['NGF']
-    ).to(device)
-    netD = EncoderVAE(
-        nc=conf['VAE']['ARCHITECTURE']['NC'],
-        nz=conf['NZ'],
-        ndf=conf['VAE']['ARCHITECTURE']['NGF']
-    ).to(device)
-else:
-    raise ValueError
+    device_str = conf['TRAIN']['DEVICE']
 
-if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
-   print('netG is using ' + str(conf['TRAIN']['NGPU']) + ' GPUs')
-   netG = torch.nn.DataParallel(netG, list(range(conf['TRAIN']['NGPU'])))
-else:
-   print('netG training on 1 gpu! D:')
+    # unspecified device
+    if 0 == len(device_str):
+        device_str = "cuda:0" if (torch.cuda.is_available() and conf['TRAIN']['NGPU'] > 0) else "cpu"
+    # cuda choosed
+    elif 'cuda:0' == device_str and (not torch.cuda.is_available() or not conf['TRAIN']['NGPU'] > 0):
+        device_str = 'cpu'
 
-netG.apply(weights_init)
+    print('DEVICE:', device_str)
+    return torch.device(device_str), dataloader
 
-if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
-   print('netD is using ' + str(conf['TRAIN']['NGPU']) + ' GPUs')
-   netD = torch.nn.DataParallel(netD, list(range(conf['TRAIN']['NGPU'])))
-else:
-   print('netD training on 1 gpu! D:')
+    # %% [markdown]
+    # # Networks
+    # %%
+def create_networks(conf, device):
+    if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
+        netG = GeneratorDCGAN(
+            nc=conf['DCGAN']['ARCHITECTURE']['NC'],
+            nz=conf['NZ'],
+            ngf=conf['DCGAN']['ARCHITECTURE']['NGF']
+        ).to(device)
+        netD = DiscriminatorDCGAN(
+            nc=conf['DCGAN']['ARCHITECTURE']['NC'],
+            ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
+        ).to(device)
+    elif ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+        netG = GeneratorDCGANProgressive(
+            nc=conf['DCGAN']['ARCHITECTURE']['NC'],
+            nz=conf['NZ'],
+            ngf=conf['DCGAN']['ARCHITECTURE']['NGF']
+        ).to(device)
+        netD = DiscriminatorDCGANProgressive(
+            nc=conf['DCGAN']['ARCHITECTURE']['NC'],
+            ndf=conf['DCGAN']['ARCHITECTURE']['NDF']
+        ).to(device)
+    elif ModelName.VAE._value_ == conf['MODEL_NAME']:
+        netG = DecoderVAE(
+            nc=conf['VAE']['ARCHITECTURE']['NC'],
+            nz=conf['NZ'],
+            ngf=conf['VAE']['ARCHITECTURE']['NGF']
+        ).to(device)
+        netD = EncoderVAE(
+            nc=conf['VAE']['ARCHITECTURE']['NC'],
+            nz=conf['NZ'],
+            ndf=conf['VAE']['ARCHITECTURE']['NGF']
+        ).to(device)
+    else:
+        raise ValueError
 
-netD.apply(weights_init)
+    if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
+        print('netG is using ' + str(conf['TRAIN']['NGPU']) + ' GPUs')
+        netG = torch.nn.DataParallel(netG, list(range(conf['TRAIN']['NGPU'])))
+    else:
+        print('netG training on 1 gpu! D:')
 
-criterion = object_from_dict(conf['TRAIN']['CRITERION'])
-# torch.nn.BCELoss()
+    netG.apply(weights_init)
 
-# %%
-if conf['VERBOSE']:
-    print(netG)
-    print(netD)
+    if (device.type != "cpu") and (conf['TRAIN']['NGPU'] > 1):
+        print('netD is using ' + str(conf['TRAIN']['NGPU']) + ' GPUs')
+        netD = torch.nn.DataParallel(netD, list(range(conf['TRAIN']['NGPU'])))
+    else:
+        print('netD training on 1 gpu! D:')
 
-# %% [markdown]
-# # Training
+    netD.apply(weights_init)
 
-# %%
-if OptimizerName.ADADELTA._value_ == conf['OPTIMIZER_G_NAME']:
-    optimizerG = torch.optim.Adadelta(netG.parameters(),
-                                lr=conf['ADADELTA']['LR'],
-                                rho=conf['ADADELTA']['RHO'],
-                                eps=conf['ADADELTA']['EPS'],
-                                weight_decay=0.001)
-elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_G_NAME']:
-    optimizerG = torch.optim.Adam(netG.parameters(),
-                        lr=conf['ADAM']['LR'],
-                        betas=(conf['ADAM']['BETA1'], 0.999))
-else:
-    raise ValueError
-if OptimizerName.ADADELTA._value_ == conf['OPTIMIZER_D_NAME']:
-    optimizerD = torch.optim.Adadelta(netD.parameters(),
-                                lr=conf['ADADELTA']['LR'],
-                                rho=conf['ADADELTA']['RHO'],
-                                eps=conf['ADADELTA']['EPS'],
-                                weight_decay=0.001)
-elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_D_NAME']:
-    optimizerD = torch.optim.Adam(netD.parameters(),
-                        lr=conf['ADAM']['LR'],
-                        betas=(conf['ADAM']['BETA1'], 0.999))
-else:
-    raise ValueError
+    criterion = object_from_dict(conf['TRAIN']['CRITERION'])
+    # torch.nn.BCELoss()
 
-saveBestModelG = SaveBestModel(NetType.GENERATOR, conf)
-saveBestModelD = SaveBestModel(NetType.DISCRIMINATOR, conf)
+    if conf['VERBOSE']:
+        print(netG)
+        print(netD)
+    return netD, netG, criterion
 
-real_label = 1.0
-fake_label = 0.0
-# %%
-G_losses = []
-D_losses = []
-D_x_table = []
-D_G_z1_table = []
-D_G_z2_table = []
+    # %% [markdown]
+    # # Training
 
-if conf['LOAD']:
-    checkpointG = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_D' + '.pth')
-    checkpointD = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_D' + '.pth')
-    netG.load_state_dict(checkpointG['model_state_dict'], strict=False)
-    netD.load_state_dict(checkpointD['model_state_dict'], strict=False)
-    # optimizerG.load_state_dict(checkpointG['optimizer_state_dict'])
-    # optimizerD.load_state_dict(checkpointD['optimizer_state_dict'])
-    epoch = checkpointG['epoch']
-    lossG = checkpointG['loss']
-    lossD = checkpointD['loss']
-    netG.eval()
-    netD.eval()
-else:
-    print("Starting Training Loop...")
-    for epoch in range(conf['TRAIN']['NUM_EPOCHS']):
-        if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
-            if conf['DCGAN']['MODE'] == "all_the_time":
+    # %%
+def train(conf, netD, netG, dataloader, device, criterion):
+    if OptimizerName.ADADELTA._value_ == conf['OPTIMIZER_G_NAME']:
+        optimizerG = torch.optim.Adadelta(netG.parameters(),
+                                    lr=conf['ADADELTA']['LR'],
+                                    rho=conf['ADADELTA']['RHO'],
+                                    eps=conf['ADADELTA']['EPS'],
+                                    weight_decay=0.001)
+    elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_G_NAME']:
+        optimizerG = torch.optim.Adam(netG.parameters(),
+                            lr=conf['ADAM']['LR'],
+                            betas=(conf['ADAM']['BETA1'], 0.999))
+    else:
+        raise ValueError
+    if OptimizerName.ADADELTA._value_ == conf['OPTIMIZER_D_NAME']:
+        optimizerD = torch.optim.Adadelta(netD.parameters(),
+                                    lr=conf['ADADELTA']['LR'],
+                                    rho=conf['ADADELTA']['RHO'],
+                                    eps=conf['ADADELTA']['EPS'],
+                                    weight_decay=0.001)
+    elif OptimizerName.ADAM._value_ == conf['OPTIMIZER_D_NAME']:
+        optimizerD = torch.optim.Adam(netD.parameters(),
+                            lr=conf['ADAM']['LR'],
+                            betas=(conf['ADAM']['BETA1'], 0.999))
+    else:
+        raise ValueError
+
+    saveBestModelG = SaveBestModel(NetType.GENERATOR, conf)
+    saveBestModelD = SaveBestModel(NetType.DISCRIMINATOR, conf)
+
+    real_label = 1.0
+    fake_label = 0.0
+    # %%
+    G_losses = []
+    D_losses = []
+    D_x_table = []
+    D_G_z1_table = []
+    D_G_z2_table = []
+
+    if conf['LOAD']:
+        checkpointG = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_G' + '.pth')
+        checkpointD = torch.load(conf['PATHS']['MODELS'] + '/final_' + conf['EXP_NAME'] + '_D' + '.pth')
+        netG.load_state_dict(checkpointG['model_state_dict'], strict=False)
+        netD.load_state_dict(checkpointD['model_state_dict'], strict=False)
+        # optimizerG.load_state_dict(checkpointG['optimizer_state_dict'])
+        # optimizerD.load_state_dict(checkpointD['optimizer_state_dict'])
+        epoch = checkpointG['epoch']
+        lossG = checkpointG['loss']
+        lossD = checkpointD['loss']
+        netG.eval()
+        netD.eval()
+    else:
+        print("Starting Training Loop...")
+        for epoch in range(conf['TRAIN']['NUM_EPOCHS']):
+            if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+                if conf['DCGAN']['MODE'] == "all_the_time":
+                    allowD = True
+                    allowG = True
+                elif conf['DCGAN']['MODE'] == "one_epoch_each":
+                    allowD = epoch % 2 == 0
+                    allowG = epoch % 2 == 1
+                else:
+                    raise ValueError
+            else:
+                # shut up Python extension
                 allowD = True
                 allowG = True
-            elif conf['DCGAN']['MODE'] == "one_epoch_each":
-                allowD = epoch % 2 == 0
-                allowG = epoch % 2 == 1
-            else:
-                raise ValueError
-        else:
-            # shut up Python extension
-            allowD = True
-            allowG = True
-        for i, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
-            if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
-                netD.zero_grad()
-                real_cpu = data[0].to(device)
-                b_size = real_cpu.size(0)
-                label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
-                output = netD(real_cpu).view(-1)
-                errD_real = criterion(output, label)
-                errD_real.backward()
-                D_x = output.mean().item()
+            for _, data in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
+                if ModelName.DCGAN._value_ == conf['MODEL_NAME']:
+                    netD.zero_grad()
+                    real_cpu = data[0].to(device)
+                    b_size = real_cpu.size(0)
+                    label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
+                    output = netD(real_cpu).view(-1)
+                    errD_real = criterion(output, label)
+                    errD_real.backward()
+                    D_x = output.mean().item()
 
-                noise = torch.randn(b_size, conf['NZ'], 1, 1, device=device)
-                fake = netG(noise)
-                l = label.fill_(fake_label)
-                output = netD(fake.detach()).view(-1)
-                errD_fake = criterion(output, label)
-                errD_fake.backward()
-                D_G_z1 = output.mean().item()
-                errD = errD_real + errD_fake
-                if allowD:
+                    noise = torch.randn(b_size, conf['NZ'], 1, 1, device=device)
+                    fake = netG(noise)
+                    l = label.fill_(fake_label)
+                    output = netD(fake.detach()).view(-1)
+                    errD_fake = criterion(output, label)
+                    errD_fake.backward()
+                    D_G_z1 = output.mean().item()
+                    errD = errD_real + errD_fake
+                    if allowD:
+                        s = optimizerD.step()
+
+                    netG.zero_grad()
+                    l = label.fill_(real_label)
+                    output = netD(fake).view(-1)
+                    errG = criterion(output, label)
+                    errG.backward()
+                    D_G_z2 = output.mean().item()
+                    if allowG:
+                        s = optimizerG.step()
+                elif ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+                    level = min([4, (epoch // conf['DCGAN']['PROGRESSIVE_STEP'] + 1) // 2])
+                    if epoch < conf['DCGAN']['PROGRESSIVE_STEP'] * 8 and (epoch // conf['DCGAN']['PROGRESSIVE_STEP']) % 2 == 1:
+                        alpha = (epoch % conf['DCGAN']['PROGRESSIVE_STEP'] + 1) / (conf['DCGAN']['PROGRESSIVE_STEP'] + 1)
+                    else:
+                        alpha = 1
+
+                    netD.zero_grad()
+                    real_cpu = data[0].to(device)
+                    real_cpu = torchvision.transforms.functional.resize(real_cpu, image_size // 2**(4 - level), torchvision.transforms.InterpolationMode.NEAREST)
+                    b_size = real_cpu.size(0)
+                    label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
+                    output = netD(real_cpu, level, alpha).view(-1)
+                    errD_real = criterion(output, label)
+                    errD_real.backward()
+                    D_x = output.mean().item()
+
+                    noise = torch.randn(b_size, conf['NZ'], 1, 1, device=device)
+                    fake = netG(noise, level, alpha)
+                    l = label.fill_(fake_label)
+                    output = netD(fake.detach(), level, alpha).view(-1)
+                    errD_fake = criterion(output, label)
+                    errD_fake.backward()
+                    D_G_z1 = output.mean().item()
+                    errD = errD_real + errD_fake
+                    if allowD:
+                        s = optimizerD.step()
+
+                    netG.zero_grad()
+                    l = label.fill_(real_label)
+                    output = netD(fake, level, alpha).view(-1)
+                    errG = criterion(output, label)
+                    errG.backward()
+                    D_G_z2 = output.mean().item()
+                    if allowG:
+                        s = optimizerG.step()
+                elif ModelName.VAE._value_ == conf['MODEL_NAME']:
+                    netD.zero_grad()
+                    netG.zero_grad()
+
+                    input = data[0].to(device)
+                    netD_output = netD(input)
+
+                    mean = netD_output[:, :conf['NZ']]
+                    log_var = netD_output[:, conf['NZ']:]
+                    var = torch.exp(0.5 * log_var)
+
+                    # Inspired by https://github.com/Jackson-Kang/Pytorch-VAE-tutorial/blob/master/01_Variational_AutoEncoder.ipynb
+                    epsilon = torch.randn_like(var).to(device)
+                    KLD = -0.5 * torch.mean(1 + log_var - mean.pow(2) - log_var.exp())
+                    z = mean + var * epsilon
+
+                    output = netG(z)
+
+                    repr_err = torch.nn.functional.mse_loss(input, output)
+                    total_err = KLD + repr_err
+                    total_err.backward()
+
                     s = optimizerD.step()
-
-                netG.zero_grad()
-                l = label.fill_(real_label)
-                output = netD(fake).view(-1)
-                errG = criterion(output, label)
-                errG.backward()
-                D_G_z2 = output.mean().item()
-                if allowG:
                     s = optimizerG.step()
-            elif ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
-                level = min([4, (epoch // conf['DCGAN']['PROGRESSIVE_STEP'] + 1) // 2])
-                if epoch < conf['DCGAN']['PROGRESSIVE_STEP'] * 8 and (epoch // conf['DCGAN']['PROGRESSIVE_STEP']) % 2 == 1:
-                    alpha = (epoch % conf['DCGAN']['PROGRESSIVE_STEP'] + 1) / (conf['DCGAN']['PROGRESSIVE_STEP'] + 1)
+                elif ModelName.StyleGAN3._value_ == conf['MODEL_NAME']:
+                    pass
                 else:
-                    alpha = 1
+                    raise ValueError
 
-                netD.zero_grad()
-                real_cpu = data[0].to(device)
-                real_cpu = torchvision.transforms.functional.resize(real_cpu, image_size // 2**(4 - level), torchvision.transforms.InterpolationMode.NEAREST)
-                b_size = real_cpu.size(0)
-                label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
-                output = netD(real_cpu, level, alpha).view(-1)
-                errD_real = criterion(output, label)
-                errD_real.backward()
-                D_x = output.mean().item()
-
-                noise = torch.randn(b_size, conf['NZ'], 1, 1, device=device)
-                fake = netG(noise, level, alpha)
-                l = label.fill_(fake_label)
-                output = netD(fake.detach(), level, alpha).view(-1)
-                errD_fake = criterion(output, label)
-                errD_fake.backward()
-                D_G_z1 = output.mean().item()
-                errD = errD_real + errD_fake
-                if allowD:
-                    s = optimizerD.step()
-
-                netG.zero_grad()
-                l = label.fill_(real_label)
-                output = netD(fake, level, alpha).view(-1)
-                errG = criterion(output, label)
-                errG.backward()
-                D_G_z2 = output.mean().item()
-                if allowG:
-                    s = optimizerG.step()
-            elif ModelName.VAE._value_ == conf['MODEL_NAME']:
-                netD.zero_grad()
-                netG.zero_grad()
-
-                input = data[0].to(device)
-                netD_output = netD(input)
-
-                mean = netD_output[:, :conf['NZ']]
-                log_var = netD_output[:, conf['NZ']:]
-                var = torch.exp(0.5 * log_var)
-
-                # Inspired by https://github.com/Jackson-Kang/Pytorch-VAE-tutorial/blob/master/01_Variational_AutoEncoder.ipynb
-                epsilon = torch.randn_like(var).to(device)
-                KLD = -0.5 * torch.mean(1 + log_var - mean.pow(2) - log_var.exp())
-                z = mean + var * epsilon
-
-                output = netG(z)
-
-                repr_err = torch.nn.functional.mse_loss(input, output)
-                total_err = KLD + repr_err
-                total_err.backward()
-
-                s = optimizerD.step()
-                s = optimizerG.step()
-            else:
-                raise ValueError
-
-        if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
-            print(
-                "[%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f"
-                % (
-                    epoch + 1,
-                    conf['TRAIN']['NUM_EPOCHS'],
-                    errD.item(),
-                    errG.item(),
-                    D_x,
-                    D_G_z1,
-                    D_G_z2,
+            if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+                print(
+                    "[%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f"
+                    % (
+                        epoch + 1,
+                        conf['TRAIN']['NUM_EPOCHS'],
+                        errD.item(),
+                        errG.item(),
+                        D_x,
+                        D_G_z1,
+                        D_G_z2,
+                    )
                 )
-            )
-            if ModelName.DCGANProgressive._value_ != conf['MODEL_NAME'] or epoch > conf['DCGAN']['PROGRESSIVE_STEP'] * 8:
-                if (0.50 < D_x < 0.99):
-                    saveBestModelD(errD.item(), epoch, netD, optimizerD, criterion)
-                if (0.01 < D_G_z2 < 0.50):
-                    saveBestModelG(errG.item(), epoch, netG, optimizerG, criterion)
+                if ModelName.DCGANProgressive._value_ != conf['MODEL_NAME'] or epoch > conf['DCGAN']['PROGRESSIVE_STEP'] * 8:
+                    if (0.50 < D_x < 0.99):
+                        saveBestModelD(errD.item(), epoch, netD, optimizerD, criterion)
+                    if (0.01 < D_G_z2 < 0.50):
+                        saveBestModelG(errG.item(), epoch, netG, optimizerG, criterion)
 
-            G_losses.append(errG.item())
-            D_losses.append(errD.item())
-            D_x_table.append(D_x)
-            D_G_z1_table.append(D_G_z1)
-            D_G_z2_table.append(D_G_z2)
+                G_losses.append(errG.item())
+                D_losses.append(errD.item())
+                D_x_table.append(D_x)
+                D_G_z1_table.append(D_G_z1)
+                D_G_z2_table.append(D_G_z2)
+                save_plots(
+                    train_accs=[
+                        {'label': 'D(x)', 'accuracies': D_x_table},
+                        {'label': 'D(G(z))[fake]', 'accuracies': D_G_z1_table},
+                        {'label': 'D(G(z))[real]', 'accuracies': D_G_z2_table}],
+                    train_losses=[
+                        {'label': 'Generator', 'losses': G_losses},
+                        {'label': 'Discriminator', 'losses': D_losses}],
+                    config=conf)
+            elif ModelName.VAE._value_ == conf['MODEL_NAME']:
+                print(
+                    "[%d/%d]\tKLD: %.4f\trepr_err: %.4f\ttotal_err: %.4f"
+                    % (
+                        epoch + 1,
+                        conf['TRAIN']['NUM_EPOCHS'],
+                        KLD,
+                        repr_err,
+                        total_err,
+                    )
+                )
+
+        save_model(netG, optimizerG, criterion, NetType.GENERATOR, conf)
+        save_model(netD, optimizerD, criterion, NetType.DISCRIMINATOR, conf)
+        if ModelName.DCGAN._value_ == conf['MODEL_NAME'] \
+        or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
             save_plots(
                 train_accs=[
                     {'label': 'D(x)', 'accuracies': D_x_table},
@@ -388,48 +418,61 @@ else:
                     {'label': 'Generator', 'losses': G_losses},
                     {'label': 'Discriminator', 'losses': D_losses}],
                 config=conf)
-        elif ModelName.VAE._value_ == conf['MODEL_NAME']:
-            print(
-                "[%d/%d]\tKLD: %.4f\trepr_err: %.4f\ttotal_err: %.4f"
-                % (
-                    epoch + 1,
-                    conf['TRAIN']['NUM_EPOCHS'],
-                    KLD,
-                    repr_err,
-                    total_err,
-                )
-            )
+
+    # %% [markdown]
+    # # Results
+
+    # %%
+import tempfile
+from pytorch_fid import fid_score
 
 
-    save_model(netG, optimizerG, criterion, NetType.GENERATOR, conf)
-    save_model(netD, optimizerD, criterion, NetType.DISCRIMINATOR, conf)
-    if ModelName.DCGAN._value_ == conf['MODEL_NAME'] or ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
-        save_plots(
-            train_accs=[
-                {'label': 'D(x)', 'accuracies': D_x_table},
-                {'label': 'D(G(z))[fake]', 'accuracies': D_G_z1_table},
-                {'label': 'D(G(z))[real]', 'accuracies': D_G_z2_table}],
-            train_losses=[
-                {'label': 'Generator', 'losses': G_losses},
-                {'label': 'Discriminator', 'losses': D_losses}],
-            config=conf)
+def prepare_results(conf, device, netG, netD, dataloader):
+    fake_images_count = 64
+    fixed_noise = torch.randn(fake_images_count, conf['NZ'], 1, 1, device=device)
+    with torch.no_grad():
+        if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+            fake = netG(fixed_noise, 4, 1).detach().cpu()
+        else:
+            fake = netG(fixed_noise).detach().cpu()
+    plot_generated_examples(fake=fake, config=conf)
 
-# %% [markdown]
-# # Results
+    interp_noise = (torch.tensor(list(range(0, 10, 1)), device=device) / 9) \
+        .reshape(10, 1, 1, 1).tile(1, conf['NZ']).transpose(dim0=1,dim1=3)
 
-# %%
-fixed_noise = torch.randn(64, conf['NZ'], device=device)
-with torch.no_grad():
-    fake = netG(fixed_noise).detach().cpu()
-plot_generated_examples(fake=fake, config=conf)
+    with torch.no_grad():
+        if ModelName.DCGANProgressive._value_ == conf['MODEL_NAME']:
+            interp = netG(interp_noise, 4, 1).detach().cpu()
+        else:
+            interp = netG(interp_noise).detach().cpu()
+    plot_interpolated_examples(fake_interp=interp, config=conf)
 
-# %%
-interp_noise = (
-    (torch.tensor(list(range(0, 10, 1)), device=device) / 9).reshape(10, 1).tile(1, conf['NZ'])
-)
-with torch.no_grad():
-    interp = netG(interp_noise).detach().cpu()
-plot_interpolated_examples(fake_interp=interp, config=conf)
+    plot_reconstructed_examples(dataloader, netD, netG, conf)
 
-# %%
-plot_reconstructed_examples(dataloader, netD, netG, conf)
+
+    # Unfortunately, the library above assumes, for some reason, that all the images are stored in a directory.
+    # Ugh.
+    fake_path = tempfile.TemporaryDirectory()
+    print(f"Saving {fake_images_count} fake images to {fake_path.name}...")
+    for x in range(fake_images_count):
+        torchvision.utils.save_image(fake[x, :, :, :], fake_path.name + "/{}.png".format(x))
+    true_path = conf['PATHS']['DATASET'] + "/bedroom64x64/0"
+    print(f"Calculating FID score... WORKERS={conf['TRAIN']['WORKERS']}")
+    print("FID: {}".format(fid_score.calculate_fid_given_paths(
+        [fake_path.name, true_path], fake_images_count, device, 2048, num_workers=conf['TRAIN']['WORKERS'])))
+    fake_path.cleanup()
+
+def main():
+    conf = parse_arguments()
+    if ModelName.StyleGAN3._value_ == conf['MODEL_NAME']:
+        train_stylegan(conf)
+        exit()
+    assert_cwd(conf)
+    device, dataloader = load_data(conf)
+    plot_dataset_examples(dataloader, device=device, config=conf)
+    netD, netG, criterion = create_networks(conf, device)
+    train(conf, netD, netG, dataloader, device, criterion)
+    prepare_results(conf, device, netG, netD, dataloader)
+
+if __name__ == '__main__':
+    main()

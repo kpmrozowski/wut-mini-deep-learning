@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 import torchvision.utils as vutils
 import numpy as np
-from mytypes import NetType
+from mytypes import ModelName, NetType
 
 class SaveBestModel:
     """
@@ -151,11 +151,15 @@ def plot_reconstructed_examples(dataloader, netD, netG, config):
     exp_name = config['EXP_NAME']
 
     input = next(iter(dataloader))[0][:10, :, :, :]
-    latent = netD(input)[:, :config['NZ']]
-    output = netG(latent)
+    if ModelName.DCGANProgressive._value_ == config['MODEL_NAME']:
+        latent = netD(input.cuda(), 4, 1)[:, :config['NZ']].tile(1, config['NZ']).transpose(dim0=1,dim1=3)
+        output = netG(latent, 4, 1)
+    else:
+        latent = netD(input.cuda())[:, :config['NZ']].tile(1, config['NZ']).transpose(dim0=1,dim1=3)
+        output = netG(latent)
 
     data = np.transpose(
-        vutils.make_grid(torch.cat([input, output]), nrow=10, padding=2, normalize=True).cpu(), (1, 2, 0))
+        vutils.make_grid(torch.cat([input, output.cpu()]), nrow=10, padding=2, normalize=True).cpu(), (1, 2, 0))
 
     plt.figure(figsize=(10, 10))
     plt.imshow(data)
