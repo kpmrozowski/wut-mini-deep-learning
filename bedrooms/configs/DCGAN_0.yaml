@@ -6,7 +6,7 @@ VERBOSE: True
 VIZUALISE: False
 DEBUG: True
 LOAD: False
-EXP_NAME: "DCGAN_0.1"
+EXP_NAME: "DCGAN_0.3"
 SEED: 69
 NZ: 100 # length of latent vector
 FIG_SIZE: [10, 5]
@@ -20,7 +20,7 @@ TRAIN:
   WORKERS: 16
   BATCH_SIZE: 128
   SHUFFLE: True
-  NUM_EPOCHS: 1
+  NUM_EPOCHS: 5
   DEVICE: "cuda:0"
   NGPU: 1
   CRITERION:
@@ -37,7 +37,7 @@ ADADELTA:
   WEIGHT_DECAY: 0
 
 ADAM:
-  LR: 0.000002
+  LR: 0.0002
   BETA1: 0.5
 
 MODEL_NAME: "DCGAN" # to choose: DCGAN, DCGANProgressive, VAE, StyleGAN3, ...todo
@@ -57,4 +57,4 @@ DCGAN:
     T_0: 1
     T_mult: 2
     eta_min: 5e-5
-  MODE: "one_epoch_each"
+  MODE: "all_the_time"

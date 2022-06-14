@@ -1,0 +1,60 @@
+# 2022-05-21
+# Config file for VAE
+# Feel free to put local changes here.
+
+VERBOSE: True
+VIZUALISE: False
+DEBUG: True
+LOAD: False
+EXP_NAME: "VAE_1.4"
+SEED: 72
+NZ: 100 # length of latent vector
+FIG_SIZE: [10, 5]
+
+# Paths
+PATHS:
+  DATASET: "../../lsun-dataset"
+  MODELS: "./models"
+  GRAPHS: "./graphs"
+
+TRAIN:
+  WORKERS: 16
+  BATCH_SIZE: 128
+  SHUFFLE: True
+  NUM_EPOCHS: 5
+  # NUM_EPOCHS: 15
+  DEVICE: "cuda:0"
+  NGPU: 1
+  CRITERION:
+    type: torch.nn.BCELoss
+
+OPTIMIZER_G_NAME: Adam # to choose: Adadelta, Adam
+OPTIMIZER_D_NAME: Adam # to choose: Adadelta, Adam
+
+ADADELTA:
+  LR: 0.01
+  RHO: 0.95
+  EPS: 0.0000007
+  WEIGHT_DECAY: 0.00001
+ADAM:
+  LR: 0.0002
+  BETA1: 0.5
+
+MODEL_NAME: "VAE" # to choose: DCGAN, DCGANProgressive, VAE, StyleGAN3, ...todo
+VAE:
+  ARCHITECTURE:
+    NC: 3 # number of color channels in the input images. For color images this is 3
+    NGF: 64 # relates to the depth of feature maps carried through the generator
+    NDF: 64 # sets the depth of feature maps propagated through the discriminator
+  ACTIVATION: "sigmoid"
+  # TODO: This is kinda dubious in VAE.
+  # LOSS:
+  #   type: segmentation_models_pytorch.utils.losses.DiceLoss
+  # METRICS:
+  #   type: segmentation_models_pytorch.utils.metrics.IoU
+  #   threshold: 0.5
+  SCHEDULER:
+    type: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+    T_0: 1
+    T_mult: 2
+    eta_min: 5e-5
